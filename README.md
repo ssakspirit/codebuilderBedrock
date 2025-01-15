@@ -14,7 +14,7 @@
 
 1. 프로젝트 클론:
 ```bash
-git clone [repository-url]
+git clone https://github.com/ssakspirit/codebuilderBedrock.git
 ```
 
 2. 의존성 설치:
