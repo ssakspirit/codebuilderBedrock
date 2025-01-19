@@ -242,25 +242,44 @@
                         <field name="NUM">10</field>
                     </shadow>
                 </value>
+            </block>            
+        </category>
+        <category name="논리" colour="#459197">
+            <block type="controls_if"></block>            
+            <block type="logic_compare">
+                <field name="OP">EQ</field>
+                <value name="A">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="B">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
             </block>
+            <block type="logic_operation">
+                <field name="OP">AND</field>
+            </block>
+            <block type="logic_negate"></block>
+            <block type="logic_boolean">
+                <field name="BOOL">TRUE</field>
+            </block>
+            <block type="logic_null"></block>
+            <block type="logic_ternary"></block>
         </category>
         <category name="변수" colour="#a41e16" custom="VARIABLE"></category>
     </xml>
 
     <script>
+        //전역 변수 선언
         let socket = io();
         let workspace;
         let isExecuting = false;  // 실행 상태를 추적하는 변수
         let shouldStop = false;   // 중지 신호를 위한 변수
 
-        // 실행 중지 함수
-        function stopExecution() {
-            if (isExecuting) {
-                shouldStop = true;
-                showNotification('실행을 중지합니다...');
-            }
-        }
-
+        // 블록 한글화
         function initBlockly() {
             // 변수 관련 메시지를 한글로 변경
             Blockly.Msg['NEW_VARIABLE'] = '변수 만들기';
@@ -309,6 +328,22 @@
             Blockly.Msg['MATH_MODULO_TITLE'] = '%1 ÷ %2 의 나머지';
             Blockly.Msg['MATH_MODULO_TOOLTIP'] = '두 수를 나눈 나머지를 반환합니다.';
 
+            // 숫자 속성 블록의 텍스트를 한글로 변경
+            Blockly.Msg['MATH_IS_EVEN'] = '짝수';
+            Blockly.Msg['MATH_IS_ODD'] = '홀수';
+            Blockly.Msg['MATH_IS_PRIME'] = '소수';
+            Blockly.Msg['MATH_IS_WHOLE'] = '정수';
+            Blockly.Msg['MATH_IS_POSITIVE'] = '양수';
+            Blockly.Msg['MATH_IS_NEGATIVE'] = '음수';
+            Blockly.Msg['MATH_IS_DIVISIBLE_BY'] = '다음 수로 나누어떨어짐:';        
+            
+            //논리 블록 메시지 한글화
+            Blockly.Msg["CONTROLS_IF_MSG_IF"] = "만약";
+            Blockly.Msg["CONTROLS_IF_MSG_ELSE"] = "그렇지 않으면";
+            Blockly.Msg["CONTROLS_IF_MSG_THEN"] = "실행";
+            Blockly.Msg["LOGIC_BOOLEAN_TRUE"] = "참";
+            Blockly.Msg["LOGIC_BOOLEAN_FALSE"] = "거짓";
+
             // 작업 공간 초기화
             workspace = Blockly.inject('blocklyDiv', {
                 toolbox: document.getElementById('toolbox'),
@@ -330,7 +365,7 @@
                     scaleSpeed: 1.2
                 }
             });
-
+            
             // '점수' 변수 자동 생성
             workspace.createVariable('점수', '', '점수');
 
@@ -353,6 +388,7 @@
             };
 
             // JavaScript 생성기 초기화
+            Blockly.JavaScript.init(workspace);
             Blockly.JavaScript.addReservedWords('code');
             Blockly.JavaScript.STATEMENT_PREFIX = '';
 
@@ -363,7 +399,401 @@
                 }
             });
         }
+                
+        // 블록 스타일 정의
+        Blockly.Theme.defineTheme('custom_theme', {
+            'base': Blockly.Themes.Classic,
+            'blockStyles': {
+                'hat_blocks': {
+                    'hat': 'cap',
+                    'colourPrimary': '#60A5FA',
+                    'colourSecondary': '#93C5FD',
+                    'colourTertiary': '#3B82F6'
+                },
+                'rounded_blocks': {
+                    'colourPrimary': '#7ABB55',
+                    'colourSecondary': '#8FD169',
+                    'colourTertiary': '#669C46'
+                },
+                'repeat_blocks': {
+                    'colourPrimary': '#55833C',
+                    'colourSecondary': '#729665',
+                    'colourTertiary': '#3D6428'
+                },
+                'agent_blocks': {
+                    'colourPrimary': '#D83B01',
+                    'colourSecondary': '#E85C33',
+                    'colourTertiary': '#B32D01'
+                },
+                'variable_blocks': {
+                    'colourPrimary': '#a41e16',
+                    'colourSecondary': '#b84940',
+                    'colourTertiary': '#8b1912'
+                },
+                'math_blocks': {
+                    'colourPrimary': '#4c4d70',
+                    'colourSecondary': '#666790',
+                    'colourTertiary': '#363756'
+                },
+                'logic_blocks': {
+                    'colourPrimary': '#459197',
+                    'colourSecondary': '#5BA7AD',
+                    'colourTertiary': '#357B81'
+                }
+            }
+        });
 
+        // 채팅명령어 블록 정의
+        Blockly.Blocks['on_chat_command'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("채팅명령어")
+                    .appendField(new Blockly.FieldTextInput("", function(newValue) {
+                        // 명령어 중복 검사
+                        const blocks = workspace.getTopBlocks(true);
+                        const eventBlocks = blocks.filter(block => 
+                            block.type === 'on_chat_command' && 
+                            block.id !== this.sourceBlock_.id
+                        );
+                        
+                        const isDuplicate = eventBlocks.some(block => 
+                            block.getFieldValue('COMMAND') === newValue
+                        );
+                        
+                        if (isDuplicate) {
+                            showNotification('이미 사용 중인 명령어입니다!');
+                            return null; // 변경을 취소합니다
+                        }
+                        
+                        return newValue;
+                    }), "COMMAND")
+                    .appendField("입력 시");
+                this.appendStatementInput('NEXT');
+                this.setColour('#60A5FA');
+                this.setTooltip("채팅창에 입력한 명령어로 코드를 실행합니다");
+                this.setStyle('hat_blocks');
+            }
+        };
+
+        // 에이전트 텔레포트 블록 정의
+        Blockly.Blocks['agent_tp_pos'] = {
+            init: function() {
+                this.appendValueInput("POSITION")
+                    .setCheck("Position")
+                    .appendField("에이전트가 텔레포트:");
+                this.appendDummyInput()
+                    .appendField("바라보는 방향")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["동쪽(+x)", "east"],
+                        ["서쪽(-x)", "west"],
+                        ["남쪽(+z)", "south"],
+                        ["북쪽(-z)", "north"]
+                    ]), "FACING");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트를 지정된 상대 좌표로 이동시키고 특정 방향을 보게 합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 생성 블록 정의
+        Blockly.Blocks['agent_spawn'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 생성");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트를 생성합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        Blockly.Blocks['agent_tp'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 플레이어에게 TP");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트를 플레이어 위치로 이동합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 이동 명령 블록
+        Blockly.Blocks['agent_move'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["앞으로", "forward"],
+                        ["뒤로", "back"],
+                        ["위로", "up"],
+                        ["아래로", "down"],
+                        ["왼쪽으로", "left"],
+                        ["오른쪽으로", "right"]
+                    ]), "DIRECTION");
+                this.appendValueInput("DISTANCE")
+                    .setCheck("Number")
+                    .appendField("칸 이동하기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트를 지정된 방향으로 지정된 칸만큼 이동합니다");
+                this.setStyle('agent_blocks');
+
+                // 기본 숫자 블록 연결 (1칸)
+                const numberBlock = this.workspace.newBlock('math_number');
+                numberBlock.initSvg();
+                numberBlock.setFieldValue('1', 'NUM');
+                this.getInput('DISTANCE').connection.connect(numberBlock.outputConnection);
+                numberBlock.render();
+            }
+        };
+
+        // 에이전트 회전 명령 블록
+        Blockly.Blocks['agent_turn'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 회전하기")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["왼쪽으로", "left"],
+                        ["오른쪽으로", "right"]
+                    ]), "DIRECTION");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트를 지정된 방향으로 회전합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 블록 파괴 명령 블록
+        Blockly.Blocks['agent_destroy'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["앞의", "forward"],
+                        ["뒤의", "back"],
+                        ["왼쪽의", "left"],
+                        ["오른쪽의", "right"],
+                        ["위의", "up"],
+                        ["아래의", "down"]
+                    ]), "DIRECTION")
+                    .appendField("블록 파괴하기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 지정된 방향의 블록을 파괴합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 공격 명령 블록
+        Blockly.Blocks['agent_attack'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 공격하기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 앞의 대상을 공격합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 블록 설치 명령 블록
+        Blockly.Blocks['agent_place'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["앞에", "forward"],
+                        ["뒤에", "back"],
+                        ["왼쪽에", "left"],
+                        ["오른쪽에", "right"],
+                        ["위에", "up"],
+                        ["아래에", "down"]
+                    ]), "DIRECTION")
+                    .appendField("블록 설치하기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 지정된 방향에 블록을 설치합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 슬롯 선택 블록
+        Blockly.Blocks['agent_set_slot'] = {
+            init: function() {
+                this.appendValueInput("SLOT")
+                    .setCheck("Number")
+                    .appendField("에이전트 슬롯 선택");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트의 인벤토리 슬롯을 선택합니다");
+                this.setStyle('agent_blocks');
+
+                // 기본 숫자 블록 연결 (슬롯 1)
+                const numberBlock = this.workspace.newBlock('math_number');
+                numberBlock.initSvg();
+                numberBlock.setFieldValue('1', 'NUM');
+                this.getInput('SLOT').connection.connect(numberBlock.outputConnection);
+                numberBlock.render();
+            }
+        };
+
+        // 에이전트 모든 아이템 버리기 명령 블록
+        Blockly.Blocks['agent_drop_all'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 모든 아이템 버리기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 모든 아이템을 버립니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 에이전트 선택 슬롯 아이템 버리기 명령 블록
+        Blockly.Blocks['agent_drop_slot'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 선택 슬롯 아이템 버리기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 선택된 슬롯의 아이템을 버립니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 아이템 줍기 블록 정의
+        Blockly.Blocks['agent_collect'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트 아이템 줍기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 주변의 아이템을 주웁니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+        
+        // 에이전트 경작 블록 정의
+        Blockly.Blocks['agent_till'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("에이전트")
+                    .appendField(new Blockly.FieldDropdown([
+                        ["앞의", "forward"],
+                        ["뒤의", "back"],
+                        ["왼쪽의", "left"],
+                        ["오른쪽의", "right"],
+                        ["위의", "up"],
+                        ["아래의", "down"]
+                    ]), "DIRECTION")
+                    .appendField("땅 경작하기");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#D83B01');
+                this.setTooltip("에이전트가 지정된 방향의 땅을 경작합니다");
+                this.setStyle('agent_blocks');
+            }
+        };
+
+        // 커스텀 반복 명령 블록
+        Blockly.Blocks['custom_repeat'] = {
+            init: function() {
+                this.appendValueInput("TIMES")
+                    .setCheck("Number")
+                    .appendField("반복하기");
+                this.appendStatementInput('DO');
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#55833C');
+                this.setTooltip("지정된 횟수만큼 명령을 반복합니다");
+                this.setStyle('repeat_blocks');
+
+                // 기본 숫자 블록 연결 (4회)
+                const numberBlock = this.workspace.newBlock('math_number');
+                numberBlock.initSvg();
+                numberBlock.setFieldValue('4', 'NUM');
+                this.getInput('TIMES').connection.connect(numberBlock.outputConnection);
+                numberBlock.render();
+            }
+        };
+        
+        // 변수 블록 초기화 그림자 블록 추가
+        const originalVariableInit = Blockly.Blocks['variables_set'].init;
+        Blockly.Blocks['variables_set'].init = function() {
+            originalVariableInit.call(this);
+            // shadow 블록 추가
+            const input = this.getInput('VALUE');
+            if (input && !input.connection.targetConnection) {
+                const shadow = this.workspace.newBlock('math_number');
+                shadow.setShadow(true);
+                shadow.initSvg();
+                shadow.setFieldValue('0', 'NUM');
+                input.connection.connect(shadow.outputConnection);
+                shadow.render();
+            }
+        };
+
+        // 기존의 블록 초기화 코드 제거 (shadow 블록으로 대체)
+        Blockly.Blocks['agent_move'].init = function() {
+            this.appendDummyInput()
+                .appendField("에이전트")
+                .appendField(new Blockly.FieldDropdown([
+                    ["앞으로", "forward"],
+                    ["뒤로", "back"],
+                    ["위로", "up"],
+                    ["아래로", "down"],
+                    ["왼쪽으로", "left"],
+                    ["오른쪽으로", "right"]
+                ]), "DIRECTION");
+            this.appendValueInput("DISTANCE")
+                .setCheck("Number")
+                .appendField("칸 이동하기");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#D83B01');
+            this.setTooltip("에이전트를 지정된 방향으로 지정된 칸만큼 이동합니다");
+            this.setStyle('agent_blocks');
+        };
+
+        // 에이전트 슬롯 선택 블록 초기화 수정
+        Blockly.Blocks['agent_set_slot'].init = function() {
+            this.appendValueInput("SLOT")
+                .setCheck("Number")
+                .appendField("에이전트 슬롯 선택");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#D83B01');
+            this.setTooltip("에이전트의 인벤토리 슬롯을 선택합니다");
+            this.setStyle('agent_blocks');
+        };
+
+        // 커스텀 반복 블록 초기화 수정
+        Blockly.Blocks['custom_repeat'].init = function() {
+            this.appendValueInput("TIMES")
+                .setCheck("Number")
+                .appendField("반복하기");
+            this.appendStatementInput('DO');
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#55833C');
+            this.setTooltip("지정된 횟수만큼 명령을 반복합니다");
+            this.setStyle('repeat_blocks');
+        };
+            
         // 좌표 블록 정의
         Blockly.defineBlocksWithJsonArray([{
             "type": "coordinate_pos",
@@ -565,30 +995,8 @@
             const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
             const z = Blockly.JavaScript.valueToCode(block, 'Z', Blockly.JavaScript.ORDER_ATOMIC) || '0';
             return [`{x: ${x}, y: ${y}, z: ${z}, isAbsolute: true}`, Blockly.JavaScript.ORDER_MEMBER];
-        };
-
-        // 에이전트 텔레포트 블록 정의
-        Blockly.Blocks['agent_tp_pos'] = {
-            init: function() {
-                this.appendValueInput("POSITION")
-                    .setCheck("Position")
-                    .appendField("에이전트가 텔레포트:");
-                this.appendDummyInput()
-                    .appendField("바라보는 방향")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["동쪽(+x)", "east"],
-                        ["서쪽(-x)", "west"],
-                        ["남쪽(+z)", "south"],
-                        ["북쪽(-z)", "north"]
-                    ]), "FACING");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트를 지정된 상대 좌표로 이동시키고 특정 방향을 보게 합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
+        };       
+        
         // 에이전트 텔레포트 코드 생성기
         Blockly.JavaScript['agent_tp_pos'] = function(block) {
             const position = Blockly.JavaScript.valueToCode(block, 'POSITION', Blockly.JavaScript.ORDER_MEMBER);
@@ -616,131 +1024,6 @@
             });\n`;
         };
 
-        // 블록 정의
-        Blockly.Blocks['on_chat_command'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("채팅명령어")
-                    .appendField(new Blockly.FieldTextInput("", function(newValue) {
-                        // 명령어 중복 검사
-                        const blocks = workspace.getTopBlocks(true);
-                        const eventBlocks = blocks.filter(block => 
-                            block.type === 'on_chat_command' && 
-                            block.id !== this.sourceBlock_.id
-                        );
-                        
-                        const isDuplicate = eventBlocks.some(block => 
-                            block.getFieldValue('COMMAND') === newValue
-                        );
-                        
-                        if (isDuplicate) {
-                            showNotification('이미 사용 중인 명령어입니다!');
-                            return null; // 변경을 취소합니다
-                        }
-                        
-                        return newValue;
-                    }), "COMMAND")
-                    .appendField("입력 시");
-                this.appendStatementInput('NEXT');
-                this.setColour('#60A5FA');
-                this.setTooltip("채팅창에 입력한 명령어로 코드를 실행합니다");
-                this.setStyle('hat_blocks');
-            }
-        };
-
-        // 블록 스타일 정의
-        Blockly.Theme.defineTheme('custom_theme', {
-            'base': Blockly.Themes.Classic,
-            'blockStyles': {
-                'hat_blocks': {
-                    'hat': 'cap',
-                    'colourPrimary': '#60A5FA',
-                    'colourSecondary': '#93C5FD',
-                    'colourTertiary': '#3B82F6'
-                },
-                'rounded_blocks': {
-                    'colourPrimary': '#7ABB55',
-                    'colourSecondary': '#8FD169',
-                    'colourTertiary': '#669C46'
-                },
-                'repeat_blocks': {
-                    'colourPrimary': '#55833C',
-                    'colourSecondary': '#729665',
-                    'colourTertiary': '#3D6428'
-                },
-                'agent_blocks': {
-                    'colourPrimary': '#D83B01',
-                    'colourSecondary': '#E85C33',
-                    'colourTertiary': '#B32D01'
-                },
-                'variable_blocks': {
-                    'colourPrimary': '#a41e16',
-                    'colourSecondary': '#b84940',
-                    'colourTertiary': '#8b1912'
-                },
-                'math_blocks': {
-                    'colourPrimary': '#4c4d70',
-                    'colourSecondary': '#666790',
-                    'colourTertiary': '#363756'
-                }
-            }
-        });
-
-        Blockly.Blocks['agent_spawn'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 생성");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트를 생성합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_tp'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 플레이어에게 TP");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트를 플레이어 위치로 이동합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        // 통합된 이동 명령 블록
-        Blockly.Blocks['agent_move'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["앞으로", "forward"],
-                        ["뒤로", "back"],
-                        ["위로", "up"],
-                        ["아래로", "down"],
-                        ["왼쪽으로", "left"],
-                        ["오른쪽으로", "right"]
-                    ]), "DIRECTION");
-                this.appendValueInput("DISTANCE")
-                    .setCheck("Number")
-                    .appendField("칸 이동하기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트를 지정된 방향으로 지정된 칸만큼 이동합니다");
-                this.setStyle('agent_blocks');
-
-                // 기본 숫자 블록 연결 (1칸)
-                const numberBlock = this.workspace.newBlock('math_number');
-                numberBlock.initSvg();
-                numberBlock.setFieldValue('1', 'NUM');
-                this.getInput('DISTANCE').connection.connect(numberBlock.outputConnection);
-                numberBlock.render();
-            }
-        };
-
         // 이동 명령 코드 생성기
         Blockly.JavaScript['agent_move'] = function(block) {
             const direction = block.getFieldValue('DIRECTION');
@@ -757,159 +1040,29 @@
                 case 'right': command = 'goRight'; break;
             }
             
-            return `console.log('\\n=== 이동 명령 실행 시작 ===');
-            console.log('방향: ${direction}, 거리: ${distance}칸');
-            console.log('------------------------');
-            for (let i = 0; i < ${distance}; i++) {
-                if (shouldStop) {
-                    console.log('실행이 중단되었습니다.');
-                    return;
-                }
-                await new Promise(resolve => {
-                    socket.emit("${command}");
-                    setTimeout(resolve, ${delay});
-                });
-            }
-            console.log('=== 이동 완료 ===\\n');\n`;
+            // JavaScript 코드 반환 시 async 함수를 사용하도록 수정
+            return `
+                await (async () => {
+                    console.log('\\n=== 이동 명령 실행 시작 ===');
+                    console.log('방향: ${direction}, 거리: ${distance}칸');
+                    console.log('------------------------');
+
+                    for (let i = 0; i < ${distance}; i++) {
+                        if (shouldStop) {
+                            console.log('실행이 중단되었습니다.');
+                            return;
+                        }
+                        await new Promise(resolve => {
+                            socket.emit("${command}");
+                            setTimeout(resolve, ${delay});
+                        });
+                    }
+
+                    console.log('=== 이동 완료 ===\\n');
+                })();
+            `;
         };
-
-        // 합된 회전 명령 블록
-        Blockly.Blocks['agent_turn'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 회전하기")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["왼쪽으로", "left"],
-                        ["오른쪽으로", "right"]
-                    ]), "DIRECTION");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트를 지정된 방향으로 회전합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_destroy'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["앞의", "forward"],
-                        ["뒤의", "back"],
-                        ["왼쪽의", "left"],
-                        ["오른쪽의", "right"],
-                        ["위의", "up"],
-                        ["아래의", "down"]
-                    ]), "DIRECTION")
-                    .appendField("블록 파괴하기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 지정된 방향의 블록을 파괴합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_attack'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 공격하기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 앞의 대상을 공격합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_place'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["앞에", "forward"],
-                        ["뒤에", "back"],
-                        ["왼쪽에", "left"],
-                        ["오른쪽에", "right"],
-                        ["위에", "up"],
-                        ["아래에", "down"]
-                    ]), "DIRECTION")
-                    .appendField("블록 설치하기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 지정된 방향에 블록을 설치합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_set_slot'] = {
-            init: function() {
-                this.appendValueInput("SLOT")
-                    .setCheck("Number")
-                    .appendField("에이전트 슬롯 선택");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트의 인벤토리 슬롯을 선택합니다");
-                this.setStyle('agent_blocks');
-
-                // 기본 숫자 블록 연결 (슬롯 1)
-                const numberBlock = this.workspace.newBlock('math_number');
-                numberBlock.initSvg();
-                numberBlock.setFieldValue('1', 'NUM');
-                this.getInput('SLOT').connection.connect(numberBlock.outputConnection);
-                numberBlock.render();
-            }
-        };
-
-        Blockly.Blocks['agent_drop_all'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 모든 아이템 버리기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 모든 아이템을 버립니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        Blockly.Blocks['agent_drop_slot'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 선택 슬롯 아이템 버리기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 선택된 슬롯의 아이템을 버립니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        // 커스텀 반복 명령 블록
-        Blockly.Blocks['custom_repeat'] = {
-            init: function() {
-                this.appendValueInput("TIMES")
-                    .setCheck("Number")
-                    .appendField("반복하기");
-                this.appendStatementInput('DO');
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#55833C');
-                this.setTooltip("지정된 횟수만큼 명령을 반복합니다");
-                this.setStyle('repeat_blocks');
-
-                // 기본 숫자 블록 연결 (4회)
-                const numberBlock = this.workspace.newBlock('math_number');
-                numberBlock.initSvg();
-                numberBlock.setFieldValue('4', 'NUM');
-                this.getInput('TIMES').connection.connect(numberBlock.outputConnection);
-                numberBlock.render();
-            }
-        };
-
+        
         // 커팅 명령어 이벤트 코드 생성
         Blockly.JavaScript['on_chat_command'] = function(block) {
             const command = block.getFieldValue('COMMAND');
@@ -932,16 +1085,20 @@
                 innerBlock = innerBlock.getNextBlock();
             }
 
-            return `for (let i = 0; i < ${times}; i++) {
-                if (shouldStop) {
-                    console.log('실행이 중단되었습니다.');
-                    return;
-                }
-                console.log('\\n=== 반복 실행:', i + 1, '===');
-                ${innerCode}
-                // 각 반복 사이에 대기 시간 추가
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }\n`;
+            return `
+                await (async () => {
+                    for (let i = 0; i < ${times}; i++) {
+                        if (shouldStop) {
+                            console.log('실행이 중단되었습니다.');
+                            return;
+                        }
+                        console.log('\\n=== 반복 실행:', i + 1, '===');
+                        ${innerCode}
+                        // 각 반복 사이에 대기 시간 추가
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                })();
+            `;
         };
 
         // XML 툴박스에서 기존 controls_repeat를 custom_repeat로 변경
@@ -952,14 +1109,220 @@
             repeatBlock.setAttribute('type', 'custom_repeat');
         }
 
+        // 회전 명령 코드 생성기
+        Blockly.JavaScript['agent_turn'] = function(block) {
+            const direction = block.getFieldValue('DIRECTION');
+            let command = direction === 'left' ? 'rotateLeft' : 'rotateRight';
+            return `await new Promise(resolve => {
+                socket.emit("${command}");
+                setTimeout(resolve, 50);
+            });\n`;
+        };
+
+        // 에이전트 생성 명령 코드 생성기
+        Blockly.JavaScript['agent_spawn'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("spawn");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 에이전트 텔레포트 명령 코드 생성기
+        Blockly.JavaScript['agent_tp'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("tp");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 블록 파괴 명령 코드 생성기
+        Blockly.JavaScript['agent_destroy'] = function(block) {
+            const direction = block.getFieldValue('DIRECTION');
+            return `await new Promise(resolve => {
+                socket.emit("destroy", "${direction}");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 에이전트 공격 명령 코드 생성기
+        Blockly.JavaScript['agent_attack'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("attack");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 블록 설치 명령 코드 생성기
+        Blockly.JavaScript['agent_place'] = function(block) {
+            const direction = block.getFieldValue('DIRECTION');
+            return `await new Promise(resolve => {
+                socket.emit("place", "${direction}");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 에이전트 슬롯 선택 명령 코드 생성기
+        Blockly.JavaScript['agent_set_slot'] = function(block) {
+            const slot = Blockly.JavaScript.valueToCode(block, 'SLOT', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+            return `await new Promise(resolve => {
+                socket.emit("setSlot", ${slot});
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 에이전트 모든 아이템 버리기 명령 코드 생성기
+        Blockly.JavaScript['agent_drop_all'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("dropAll");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 에이전트 슬롯 아이템 버리기 명령 코드 생성기
+        Blockly.JavaScript['agent_drop_slot'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("dropSlotItem");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 아이템 줍기 코드 생성기
+        Blockly.JavaScript['agent_collect'] = function(block) {
+            return `await new Promise(resolve => {
+                socket.emit("collect");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 블록 모양 추가
+        Blockly.BlockSvg.START_HAT_PATH = 'c 25,-22 71,-22 96,0';
+        Blockly.BlockSvg.START_HAT_HIGHLIGHT_PATH = 'c 25,-22 71,-22 96,0';
+
+        // 경작 명령 코드 생성기
+        Blockly.JavaScript['agent_till'] = function(block) {
+            const direction = block.getFieldValue('DIRECTION');
+            return `await new Promise(resolve => {
+                socket.emit("till", "${direction}");
+                setTimeout(resolve, 150);
+            });\n`;
+        };
+
+        // 모든 명령 블록의 코드 생성기 수정
+        const originalGenerators = {
+            'agent_move': Blockly.JavaScript['agent_move'],
+            'agent_turn': Blockly.JavaScript['agent_turn'],
+            'agent_destroy': Blockly.JavaScript['agent_destroy'],
+            'agent_place': Blockly.JavaScript['agent_place'],
+            'agent_spawn': Blockly.JavaScript['agent_spawn'],
+            'agent_tp': Blockly.JavaScript['agent_tp'],
+            'agent_tp_pos': Blockly.JavaScript['agent_tp_pos'],
+            'agent_attack': Blockly.JavaScript['agent_attack'],
+            'agent_set_slot': Blockly.JavaScript['agent_set_slot'],
+            'agent_drop_all': Blockly.JavaScript['agent_drop_all'],
+            'agent_drop_slot': Blockly.JavaScript['agent_drop_slot'],
+            'agent_collect': Blockly.JavaScript['agent_collect'],
+            'agent_till': Blockly.JavaScript['agent_till'],
+            'coordinate_pos': Blockly.JavaScript['coordinate_pos']
+        };
+
+        // controls_if 블록의 코드 생성기 수정
+        Blockly.JavaScript['controls_if'] = function(block) {
+            // 조건문과 실행 코드 생성
+            let n = 0;
+            let code = '', conditionCode;
+            do {
+                conditionCode = Blockly.JavaScript.valueToCode(block, 'IF' + n,
+                    Blockly.JavaScript.ORDER_NONE) || 'false';
+                
+                // DO 입력의 내부 블록들을 직접 처리
+                let branchBlock = block.getInputTargetBlock('DO' + n);
+                let branchCode = '';
+                while (branchBlock) {
+                    branchCode += Blockly.JavaScript[branchBlock.type](branchBlock);
+                    branchBlock = branchBlock.getNextBlock();
+                }
+                
+                code += (n == 0 ? 'if (' : 'else if (') + conditionCode + ') {\n' + branchCode + '}';
+                ++n;
+            } while (block.getInput('IF' + n));
+
+            if (block.getInput('ELSE')) {
+                // ELSE 입력의 내부 블록들을 직접 처리
+                let elseBlock = block.getInputTargetBlock('ELSE');
+                let elseCode = '';
+                while (elseBlock) {
+                    elseCode += Blockly.JavaScript[elseBlock.type](elseBlock);
+                    elseBlock = elseBlock.getNextBlock();
+                }
+                code += ' else {\n' + elseCode + '}';
+            }
+            
+            // 비동기 처리를 위해 async 함수로 감싸기
+            return `
+                await (async () => {
+                    ${code}
+                })();
+            `;
+        };
+
+        // 각 명령 블록의 코드 생성기를 중지 체크가 포함된 버전으로 교체
+        Object.keys(originalGenerators).forEach(blockType => {
+            if (blockType === 'coordinate_pos') return;  // 좌표 블록은 건너뛰기
+            const originalGenerator = originalGenerators[blockType];
+            Blockly.JavaScript[blockType] = function(block) {
+                const originalCode = originalGenerator.call(this, block);
+                return `
+                    await (async () => {
+                        if (shouldStop) {
+                            console.log('실행이 중단되었습니다.');
+                            return;
+                        }
+                        console.log('명령 실행:', '${blockType}');
+                        ${originalCode}
+                        // 각 명령 사이에 추가 대기 시간
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    })();
+                `;
+            };
+        });
+
+        // 반복 블록의 코드 생성기도 중지 체크 포함
+        const originalRepeatGenerator = Blockly.JavaScript['custom_repeat'];
+        Blockly.JavaScript['custom_repeat'] = function(block) {
+            const times = Blockly.JavaScript.valueToCode(block, 'TIMES', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+            let innerBlock = block.getInputTargetBlock('DO');
+            let innerCode = '';
+            
+            while (innerBlock) {
+                innerCode += Blockly.JavaScript[innerBlock.type](innerBlock);
+                innerBlock = innerBlock.getNextBlock();
+            }
+
+            return `
+                await (async () => {
+                    for (let i = 0; i < ${times}; i++) {
+                        if (shouldStop) {
+                            console.log('실행이 중단되었습니다.');
+                            return;
+                        }
+                        console.log('\\n=== 반복 실행:', i + 1, '===');
+                        ${innerCode}
+                        // 각 반복 사이에 대기 시간 추가
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                })();
+            `;
+        };
+
+        // 알림 메시지 표시 함수
         function showNotification(message) {
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.classList.add('show');
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
+                    notification.classList.remove('show');
+                }, 3000);
+            }
 
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', function() {
@@ -991,9 +1354,22 @@
                 }
             });
         });
+        
+        // 실행 중지 함수
+        function stopExecution() {
+            if (isExecuting) {
+                shouldStop = true;
+                showNotification('실행을 중지합니다...');
+            }
+        }
 
         // 명령어 실행 이벤트 처리
         socket.on('executeCommands', async function(blockId) {
+            if (isExecuting) {
+                showNotification('이미 실행 중입니다.');
+                return;
+            }
+            
             const blocks = workspace.getTopBlocks(true);
             const eventBlocks = blocks.filter(block => block.type === 'on_chat_command');
             
@@ -1006,8 +1382,10 @@
                     console.log('블록 ID:', blockId);
                     console.log('------------------------');
                     showNotification('명령을 실행합니다...');
+                    
                     let code = '';
                     let nextBlock = targetBlock.getInputTargetBlock('NEXT');
+                    
                     while (nextBlock) {
                         if (shouldStop) {
                             console.log('실행이 중단되었습니다.');
@@ -1015,9 +1393,22 @@
                             isExecuting = false;
                             return;
                         }
-                        code += Blockly.JavaScript[nextBlock.type](nextBlock);
+                        
+                        // 코드 생성기 재초기화
+                        Blockly.JavaScript.init(workspace);
+                        
+                        if (Blockly.JavaScript[nextBlock.type]) {
+                            code += Blockly.JavaScript[nextBlock.type](nextBlock);
+                        } else {
+                            console.warn(`블록 타입 "${nextBlock.type}"에 대한 코드 생성기가 없습니다.`);
+                        }
+                        
                         nextBlock = nextBlock.getNextBlock();
                     }
+                    
+                    // 디버깅을 위한 생성된 코드 출력
+                    console.log('생성된 코드:', code);
+                    
                     await eval('(async () => { ' + code + ' })()');
                     console.log('------------------------');
                     console.log('=== 실행 완료 ===\n');
@@ -1036,251 +1427,7 @@
             }
         });
 
-        // 회전 명령 코드 생성기
-        Blockly.JavaScript['agent_turn'] = function(block) {
-            const direction = block.getFieldValue('DIRECTION');
-            let command = direction === 'left' ? 'rotateLeft' : 'rotateRight';
-            return `await new Promise(resolve => {
-                socket.emit("${command}");
-                setTimeout(resolve, 50);
-            });\n`;
-        };
-
-        // 기타 명령 블록들의 코드 생성기
-        Blockly.JavaScript['agent_spawn'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("spawn");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_tp'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("tp");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_destroy'] = function(block) {
-            const direction = block.getFieldValue('DIRECTION');
-            return `await new Promise(resolve => {
-                socket.emit("destroy", "${direction}");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_attack'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("attack");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_place'] = function(block) {
-            const direction = block.getFieldValue('DIRECTION');
-            return `await new Promise(resolve => {
-                socket.emit("place", "${direction}");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_set_slot'] = function(block) {
-            const slot = Blockly.JavaScript.valueToCode(block, 'SLOT', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-            return `await new Promise(resolve => {
-                socket.emit("setSlot", ${slot});
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_drop_all'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("dropAll");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        Blockly.JavaScript['agent_drop_slot'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("dropSlotItem");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        // 아이템 줍기 블록 정의
-        Blockly.Blocks['agent_collect'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트 아이템 줍기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 주변의 아이템을 주웁니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        // 아이템 줍기 코드 생성기
-        Blockly.JavaScript['agent_collect'] = function(block) {
-            return `await new Promise(resolve => {
-                socket.emit("collect");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        // 블록 모양 추가
-        Blockly.BlockSvg.START_HAT_PATH = 'c 25,-22 71,-22 96,0';
-        Blockly.BlockSvg.START_HAT_HIGHLIGHT_PATH = 'c 25,-22 71,-22 96,0';
-
-        // 에이전트 경작 블록 정의
-        Blockly.Blocks['agent_till'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("에이전트")
-                    .appendField(new Blockly.FieldDropdown([
-                        ["앞의", "forward"],
-                        ["뒤의", "back"],
-                        ["왼쪽의", "left"],
-                        ["오른쪽의", "right"],
-                        ["위의", "up"],
-                        ["아래의", "down"]
-                    ]), "DIRECTION")
-                    .appendField("땅 경작하기");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour('#D83B01');
-                this.setTooltip("에이전트가 지정된 방향의 땅을 경작합니다");
-                this.setStyle('agent_blocks');
-            }
-        };
-
-        // 경작 명령 코드 생성기
-        Blockly.JavaScript['agent_till'] = function(block) {
-            const direction = block.getFieldValue('DIRECTION');
-            return `await new Promise(resolve => {
-                socket.emit("till", "${direction}");
-                setTimeout(resolve, 150);
-            });\n`;
-        };
-
-        // 모든 명령 블록의 코드 생성기 수정
-        const originalGenerators = {
-            'agent_move': Blockly.JavaScript['agent_move'],
-            'agent_turn': Blockly.JavaScript['agent_turn'],
-            'agent_destroy': Blockly.JavaScript['agent_destroy'],
-            'agent_place': Blockly.JavaScript['agent_place'],
-            'agent_spawn': Blockly.JavaScript['agent_spawn'],
-            'agent_tp': Blockly.JavaScript['agent_tp'],
-            'agent_tp_pos': Blockly.JavaScript['agent_tp_pos'],
-            'agent_attack': Blockly.JavaScript['agent_attack'],
-            'agent_set_slot': Blockly.JavaScript['agent_set_slot'],
-            'agent_drop_all': Blockly.JavaScript['agent_drop_all'],
-            'agent_drop_slot': Blockly.JavaScript['agent_drop_slot'],
-            'agent_collect': Blockly.JavaScript['agent_collect'],
-            'agent_till': Blockly.JavaScript['agent_till'],
-            'coordinate_pos': Blockly.JavaScript['coordinate_pos']
-        };
-
-        // 각 명령 블록의 코드 생성기를 중지 체크가 포함된 버전으로 교체
-        Object.keys(originalGenerators).forEach(blockType => {
-            if (blockType === 'coordinate_pos') return;  // 좌표 블록은 건너뛰기
-            const originalGenerator = originalGenerators[blockType];
-            Blockly.JavaScript[blockType] = function(block) {
-                const originalCode = originalGenerator.call(this, block);
-                return `if (shouldStop) {
-                    console.log('실행이 중단되었습니다.');
-                    return;
-                }
-                console.log('명령 실행:', '${blockType}');
-                ${originalCode}
-                // 각 명령 사이에 추가 대기 시간
-                await new Promise(resolve => setTimeout(resolve, 50));`;
-            };
-        });
-
-        // 반복 블록의 코드 생성기도 중지 체크 포함
-        const originalRepeatGenerator = Blockly.JavaScript['custom_repeat'];
-        Blockly.JavaScript['custom_repeat'] = function(block) {
-            const times = Blockly.JavaScript.valueToCode(block, 'TIMES', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-            let innerBlock = block.getInputTargetBlock('DO');
-            let innerCode = '';
-            
-            while (innerBlock) {
-                innerCode += Blockly.JavaScript[innerBlock.type](innerBlock);
-                innerBlock = innerBlock.getNextBlock();
-            }
-
-            return `for (let i = 0; i < ${times}; i++) {
-                if (shouldStop) {
-                    console.log('실행이 중단되었습니다.');
-                    return;
-                }
-                console.log('\\n=== 반복 실행:', i + 1, '===');
-                ${innerCode}
-                // 각 반복 사이에 대기 시간 추가
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }\n`;
-        };
-
-        // 변수 블록 초기화 수정
-        const originalVariableInit = Blockly.Blocks['variables_set'].init;
-        Blockly.Blocks['variables_set'].init = function() {
-            originalVariableInit.call(this);
-            // shadow 블록 추가
-            const input = this.getInput('VALUE');
-            if (input && !input.connection.targetConnection) {
-                const shadow = this.workspace.newBlock('math_number');
-                shadow.setShadow(true);
-                shadow.initSvg();
-                shadow.setFieldValue('0', 'NUM');
-                input.connection.connect(shadow.outputConnection);
-                shadow.render();
-            }
-        };
-
-        // 기존의 블록 초기화 코드 제거 (shadow 블록으로 대체)
-        Blockly.Blocks['agent_move'].init = function() {
-            this.appendDummyInput()
-                .appendField("에이전트")
-                .appendField(new Blockly.FieldDropdown([
-                    ["앞으로", "forward"],
-                    ["뒤로", "back"],
-                    ["위로", "up"],
-                    ["아래로", "down"],
-                    ["왼쪽으로", "left"],
-                    ["오른쪽으로", "right"]
-                ]), "DIRECTION");
-            this.appendValueInput("DISTANCE")
-                .setCheck("Number")
-                .appendField("칸 이동하기");
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour('#D83B01');
-            this.setTooltip("에이전트를 지정된 방향으로 지정된 칸만큼 이동합니다");
-            this.setStyle('agent_blocks');
-        };
-
-        Blockly.Blocks['agent_set_slot'].init = function() {
-            this.appendValueInput("SLOT")
-                .setCheck("Number")
-                .appendField("에이전트 슬롯 선택");
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour('#D83B01');
-            this.setTooltip("에이전트의 인벤토리 슬롯을 선택합니다");
-            this.setStyle('agent_blocks');
-        };
-
-        Blockly.Blocks['custom_repeat'].init = function() {
-            this.appendValueInput("TIMES")
-                .setCheck("Number")
-                .appendField("반복하기");
-            this.appendStatementInput('DO');
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour('#55833C');
-            this.setTooltip("지정된 횟수만큼 명령을 반복합니다");
-            this.setStyle('repeat_blocks');
-        };
+        
     </script>
 </body>
 </html>

@@ -8,15 +8,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "이 프로젝트는 마인크래프트 에이전트를 블록 코딩으로 제어할 수 있는 웹 기반 도구입니다.",
   "dependencies": {
     "child_process": "^1.0.2",
     "colors": "^1.4.0",
+    "copy-paste": "^1.5.3",
     "express": "^4.21.2",
     "figlet": "^1.8.0",
     "http": "^0.0.1-security",
     "socket.io": "^4.8.1",
-    "uuid": "^11.0.3",
+    "uuid": "^11.0.5",
     "ws": "^8.18.0"
   }
 }
