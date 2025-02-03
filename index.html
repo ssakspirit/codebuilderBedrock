@@ -102,6 +102,26 @@
     <xml id="toolbox" style="display: none">
         <category name="플레이어" colour="#60A5FA">
             <block type="on_chat_command"></block>
+            <block type="text_print">
+                <value name="TEXT">
+                    <shadow type="text">
+                        <field name="TEXT">안녕하세요!</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="text_join">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                    <shadow type="text">
+                        <field name="TEXT">첫번째</field>
+                    </shadow>
+                </value>
+                <value name="ADD1">
+                    <shadow type="text">
+                        <field name="TEXT">두번째</field>
+                    </shadow>
+                </value>
+            </block>
         </category>
         <category name="에이전트" colour="#D83B01">
             <block type="agent_spawn"></block>
@@ -1322,6 +1342,97 @@
                         // 각 반복 사이에 대기 시간 추가
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
+                })();
+            `;
+        };
+
+        // 채팅창에 말하기 명령 블록 수정
+        Blockly.Blocks['text_print'] = {
+            init: function() {
+                this.appendValueInput('TEXT')
+                    .setCheck(['String', 'Array'])  // String과 Array 모두 받을 수 있도록 설정
+                    .appendField("채팅창에 말하기");
+                
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour('#60A5FA');
+                this.setTooltip("채팅창에 지정된 메시지를 표시합니다");
+                this.setStyle('hat_blocks');
+            }
+        };
+
+        // text_join 블록 초기화 수정
+        Blockly.Blocks['text_join'] = {
+            init: function() {
+                this.setStyle('hat_blocks');  // 플레이어 카테고리와 같은 스타일 사용
+                this.setColour('#60A5FA');    // 플레이어 카테고리와 같은 색상
+                this.itemCount_ = 2;
+                this.updateShape_();
+                this.setOutput(true, 'String');
+                this.setTooltip("여러 텍스트를 하나로 합칩니다");
+            },
+
+            mutationToDom: function() {
+                const container = Blockly.utils.xml.createElement('mutation');
+                container.setAttribute('items', this.itemCount_);
+                return container;
+            },
+
+            domToMutation: function(xmlElement) {
+                this.itemCount_ = parseInt(xmlElement.getAttribute('items'), 10);
+                this.updateShape_();
+            },
+
+            updateShape_: function() {
+                // 첫 번째 입력값은 "텍스트 합치기:" 레이블과 함께
+                if (this.getInput('ADD0')) {
+                    this.removeInput('ADD0');
+                }
+                this.appendValueInput('ADD0')
+                    .setCheck('String')
+                    .appendField('텍스트 합치기:');
+
+                // 나머지 입력값들
+                for (let i = 1; i < this.itemCount_; i++) {
+                    if (this.getInput('ADD' + i)) {
+                        this.removeInput('ADD' + i);
+                    }
+                    this.appendValueInput('ADD' + i)
+                        .setCheck('String')
+                        .appendField('더하기');
+                }
+            }
+        };
+
+
+        // text_join 블록의 코드 생성기 수정
+        Blockly.JavaScript['text_join'] = function(block) {
+            // 입력된 텍스트들을 배열로 가져옴
+            const values = [];
+            for (let i = 0; i < block.itemCount_; i++) {
+                const valueCode = Blockly.JavaScript.valueToCode(block, 'ADD' + i,
+                    Blockly.JavaScript.ORDER_NONE) || '\'\'';
+                values.push(valueCode);
+            }
+            // 텍스트들을 공백으로 연결
+            return [values.join(' + \' \' + '), Blockly.JavaScript.ORDER_ADDITION];
+        };
+
+        // 채팅창에 말하기 블록의 코드 생성기
+        Blockly.JavaScript['text_print'] = function(block) {
+            const msg = Blockly.JavaScript.valueToCode(block, 'TEXT',
+                Blockly.JavaScript.ORDER_NONE) || '\'\'';
+            
+            return `
+                await (async () => {
+                    if (shouldStop) {
+                        console.log('실행이 중단되었습니다.');
+                        return;
+                    }
+                    await new Promise(resolve => {
+                        socket.emit('say', ${msg});
+                        setTimeout(resolve, 150);
+                    });
                 })();
             `;
         };

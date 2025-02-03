@@ -253,7 +253,14 @@ async function start() {
                         send(`agent till ${direction}`);
                         console.log('🌱 땅 경작:', direction);
                     });
-                });
+
+                    // 채팅창에 말하기 명령어 처리
+                    clientSocket.on("say", (message) => {
+                        send(`tellraw @a {"rawtext":[{"text":"<"},{"selector":"@s"},{"text":"> ${message}"}]}`);
+                        console.log('💬 채팅: ' + message);
+                    });
+                });       
+
 
                 // WebSocket 메시지 처리
                 socket.on('message', (message) => {
@@ -346,7 +353,7 @@ async function start() {
 
                     socket.send(JSON.stringify(msg));
                 }
-
+                
                 // 정적 파일 서비스 설정
                 app.use(express.static(path.join(__dirname)));
 
