@@ -259,6 +259,13 @@ async function start() {
                         send(`tellraw @a {"rawtext":[{"text":"<"},{"selector":"@s"},{"text":"> ${message}"}]}`);
                         console.log('💬 채팅: ' + message);
                     });
+
+                    // 블록 설치 명령어 처리
+                    clientSocket.on("setblock", (data) => {
+                        const tilde = data.isAbsolute ? '' : '~';
+                        send(`setblock ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z} ${data.blockType}`);
+                        console.log(`🏗️ 블록 설치: ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z}, 종류: ${data.blockType}`);
+                    });
                 });       
 
 
