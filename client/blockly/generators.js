@@ -12,6 +12,13 @@ Blockly.JavaScript['variables_set'] = function(block) {
     return `${varName} = ${argument0};\n`;
 };
 
+// 변수 값 바꾸기 코드 생성기
+Blockly.JavaScript['math_change'] = function(block) {
+    const argument0 = Blockly.JavaScript.valueToCode(block, 'DELTA', Blockly.JavaScript.ORDER_ADDITION) || '0';
+    const varName = Blockly.JavaScript.nameDB_.getName(block.getFieldValue('VAR'), Blockly.VARIABLE_CATEGORY_NAME);
+    return `${varName} = (typeof ${varName} == 'number' ? ${varName} : 0) + Number(${argument0});\n`;
+};
+
 // 블록 타입 코드 생성기
 Blockly.JavaScript.forBlock['block_type'] = function(block) {
     const blockType = block.getFieldValue('BLOCK_TYPE');
