@@ -1,5 +1,6 @@
-const WSPort = 3000;
-const ExpressPort = 3001;
+// 공통 모듈 불러오기
+const { SOCKET_EVENTS, PORTS } = require('../shared/constants');
+const { CommandData, Position } = require('../shared/types');
 
 const WebSocket = require('ws');
 const uuid = require('uuid');
@@ -13,6 +14,10 @@ const net = require('net');
 const http = require('http');
 const { Server } = require('socket.io');
 const ncp = require('copy-paste');
+
+// 포트 설정
+const WSPort = PORTS.WEBSOCKET;
+const ExpressPort = PORTS.EXPRESS;
 
 start();
 
@@ -362,11 +367,12 @@ async function start() {
                 }
                 
                 // 정적 파일 서비스 설정
-                app.use(express.static(path.join(__dirname)));
+                app.use(express.static(path.join(__dirname, '../client')));
+                app.use('/shared', express.static(path.join(__dirname, '../shared')));
 
                 // 메인 페이지 라우트
                 app.get('/', (req, res) => {
-                    res.sendFile(path.join(__dirname, 'index.html'));
+                    res.sendFile(path.join(__dirname, '../client/index.html'));
                 });
 
                 server.listen(ExpressPort, () => {

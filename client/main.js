@@ -212,6 +212,11 @@ function initBlockly() {
     });
 }
 
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded', function() {
+    initBlockly();
+});
+
 // 명령어 실행 이벤트 처리
 socket.on('executeCommands', async function(blockId) {
     if (isExecuting) {
@@ -274,9 +279,4 @@ socket.on('executeCommands', async function(blockId) {
         console.log('❌ 명령어 블록을 찾을 수 없음');
         showNotification('해당 명령어 블록을 찾을 수 없습니다.');
     }
-});
-
-// 페이지 로드 시 실행
-document.addEventListener('DOMContentLoaded', function() {
-    initBlockly();
 }); 
