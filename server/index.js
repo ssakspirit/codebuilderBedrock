@@ -14,6 +14,8 @@ const net = require('net');
 const http = require('http');
 const { Server } = require('socket.io');
 const ncp = require('copy-paste');
+const fse = require('fs-extra'); // 정적 파일 복사용
+const os = require('os');
 
 // 포트 자동 탐색 함수 추가
 async function findAvailablePort(startPort, endPort) {
@@ -366,24 +368,33 @@ async function start() {
                 socket.send(JSON.stringify(msg));
             }
             
-            // pkg 환경에서 정적 파일 경로를 올바르게 반환하는 함수
-            function getStaticPath(relPath) {
+            // pkg로 빌드된 환경에서 정적 파일을 임시 폴더에 복사하는 함수
+            function extractAssetsIfNeeded() {
                 if (process.pkg) {
-                    // pkg로 빌드된 실행 파일일 때: 실행 파일 위치 기준
-                    return path.join(path.dirname(process.execPath), relPath);
+                    const base = path.dirname(process.execPath);
+                    const tmpDir = path.join(os.tmpdir(), 'bedrock-agent-static');
+                    // 복사할 폴더 목록
+                    const folders = ['client', 'blocks', 'shared', 'public'];
+                    folders.forEach(folder => {
+                        const src = path.join(base, folder);
+                        const dest = path.join(tmpDir, folder);
+                        if (!fse.existsSync(dest)) {
+                            fse.copySync(src, dest);
+                        }
+                    });
+                    return tmpDir;
                 } else {
-                    // 개발 환경: 소스 코드 기준
-                    return path.join(__dirname, '..', relPath);
+                    return path.join(__dirname, '..');
                 }
             }
 
-            // 정적 파일 서비스 설정 (경로 보정 적용)
-            app.use(express.static(getStaticPath('client')));
-            app.use('/shared', express.static(getStaticPath('shared')));
-
-            // 메인 페이지 라우트 (경로 보정 적용)
+            // 정적 파일 경로를 임시 폴더로 보정
+            const staticBase = extractAssetsIfNeeded();
+            app.use(express.static(path.join(staticBase, 'client')));
+            app.use('/shared', express.static(path.join(staticBase, 'shared')));
+            app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
             app.get('/', (req, res) => {
-                res.sendFile(path.join(getStaticPath('client'), 'index.html'));
+                res.sendFile(path.join(staticBase, 'client', 'index.html'));
             });
 
             // Express 서버 실행
