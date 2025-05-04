@@ -28,65 +28,17 @@ Blockly.Blocks['block_type'] = {
     }
 };
 
-// 블록 설치 명령 블록 정의
-Blockly.Blocks['set_block'] = {
-    init: function() {
-        this.appendValueInput("POSITION")
-            .setCheck("Position")
-            .appendField("블록 설치:");
-        this.appendValueInput("BLOCK_TYPE")
-            .setCheck(["Number", "BlockType"])
-            .appendField("종류");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour('#7ABB55');
-        this.setTooltip("지정된 위치에 선택한 블록을 설치합니다");
-        this.setStyle('rounded_blocks');
-
-        // 새도우 블록으로 위치와 블록 타입 설정
-        const posInput = this.getInput('POSITION');
-        if (posInput && !posInput.connection.targetConnection) {
-            const coordBlock = this.workspace.newBlock('coordinate_pos');
-            coordBlock.setShadow(true);
-            coordBlock.initSvg();
-
-            // X, Y, Z 값을 각각 0으로 설정
-            ['X', 'Y', 'Z'].forEach(coord => {
-                const numBlock = this.workspace.newBlock('math_number');
-                numBlock.setShadow(true);
-                numBlock.initSvg();
-                numBlock.setFieldValue('0', 'NUM');
-                coordBlock.getInput(coord).connection.connect(numBlock.outputConnection);
-                numBlock.render();
-            });
-
-            posInput.connection.connect(coordBlock.outputConnection);
-            coordBlock.render();
-        }
-
-        // 블록 타입 새도우 블록 설정
-        const typeInput = this.getInput('BLOCK_TYPE');
-        if (typeInput && !typeInput.connection.targetConnection) {
-            const blockTypeBlock = this.workspace.newBlock('block_type');
-            blockTypeBlock.setShadow(true);
-            blockTypeBlock.initSvg();
-            typeInput.connection.connect(blockTypeBlock.outputConnection);
-            blockTypeBlock.render();
-        }
-    }
-};
-
 // 좌표 블록 정의
 Blockly.Blocks['coordinate_pos'] = {
     init: function() {
         this.appendValueInput("X")
-            .setCheck("Number")
+            .setCheck(["Number", "Variable"])
             .appendField("~");
         this.appendValueInput("Y")
-            .setCheck("Number")
+            .setCheck(["Number", "Variable"])
             .appendField("~");
         this.appendValueInput("Z")
-            .setCheck("Number")
+            .setCheck(["Number", "Variable"])
             .appendField("~");
         this.setInputsInline(true);
         this.setOutput(true, "Position");
@@ -113,12 +65,12 @@ Blockly.Blocks['coordinate_pos'] = {
 Blockly.Blocks['world_pos'] = {
     init: function() {
         this.appendValueInput("X")
-            .setCheck("Number")
+            .setCheck(["Number", "Variable"])
             .appendField("월드");
         this.appendValueInput("Y")
-            .setCheck("Number");
+            .setCheck(["Number", "Variable"]);
         this.appendValueInput("Z")
-            .setCheck("Number");
+            .setCheck(["Number", "Variable"]);
         this.setInputsInline(true);
         this.setOutput(true, "Position");
         this.setColour('#69b090');
@@ -140,59 +92,51 @@ Blockly.Blocks['world_pos'] = {
     }
 };
 
-// XML 툴박스 수정 부분을 DOMContentLoaded 이벤트 안으로 이동
-document.addEventListener('DOMContentLoaded', function() {
-    // 위치 블록 카테고리 수정
-    const positionCategory = document.querySelector('category[name="위치"]');
-    if (positionCategory) {
-        positionCategory.innerHTML = `
-            <block type="coordinate_pos">
-                <value name="X">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Z">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="world_pos">
-                <value name="X">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Z">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-        `;
+// 블록 설치 명령 블록 정의
+Blockly.Blocks['set_block'] = {
+    init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("Position")
+            .appendField("블록 설치:");
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck(["String", "BlockType"])
+            .appendField("종류");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#7ABB55');
+        this.setTooltip("지정된 위치에 선택한 블록을 설치합니다");
+        this.setStyle('rounded_blocks');
     }
+};
 
-    // 반복 블록 카테고리 수정
-    const toolbox = document.getElementById('toolbox');
-    const basicCategory = toolbox.querySelector('category[name="반복"]');
-    if (basicCategory) {
-        const repeatBlock = basicCategory.querySelector('block[type="controls_repeat"]');
-        if (repeatBlock) {
-            repeatBlock.setAttribute('type', 'custom_repeat');
-        }
+// 블록 채우기 명령 블록 정의
+Blockly.Blocks['fill_blocks'] = {
+    init: function() {
+        this.appendValueInput("START_POS")
+            .setCheck("Position")
+            .appendField("블록 채우기: 시작 좌표");
+        this.appendValueInput("END_POS")
+            .setCheck("Position")
+            .appendField("끝 좌표");           
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck(["String", "BlockType"])
+            .appendField("채울 블록");
+        this.appendDummyInput()
+            .appendField("채우기 옵션")
+            .appendField(new Blockly.FieldDropdown([
+                ["기본", "replace"],
+                ["속이 비게", "hollow"],
+                ["테두리만", "outline"],
+                ["겹치기", "keep"],
+                ["파괴", "destroy"]
+            ]), "FILL_MODE");
+        this.setInputsInline(false);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#7ABB55');
+        this.setTooltip('지정된 영역을 블록으로 채웁니다');
     }
-});
+};
 
 // 에이전트 관련 블록 정의
 Blockly.Blocks['agent_move'] = {
@@ -440,27 +384,6 @@ Blockly.Blocks['agent_tp_pos'] = {
         this.setColour('#D83B01');
         this.setTooltip("에이전트를 지정된 상대 좌표로 이동시키고 특정 방향을 보게 합니다");
         this.setStyle('agent_blocks');
-
-        // 새도우 블록으로 좌표 기본값 설정
-        const input = this.getInput('POSITION');
-        if (input && !input.connection.targetConnection) {
-            const coordBlock = this.workspace.newBlock('coordinate_pos');
-            coordBlock.setShadow(true);
-            coordBlock.initSvg();
-
-            // X, Y, Z 값을 각각 0으로 설정
-            ['X', 'Y', 'Z'].forEach(coord => {
-                const numBlock = this.workspace.newBlock('math_number');
-                numBlock.setShadow(true);
-                numBlock.initSvg();
-                numBlock.setFieldValue('0', 'NUM');
-                coordBlock.getInput(coord).connection.connect(numBlock.outputConnection);
-                numBlock.render();
-            });
-
-            input.connection.connect(coordBlock.outputConnection);
-            coordBlock.render();
-        }
     }
 };
 
@@ -588,4 +511,58 @@ Blockly.Blocks['variables_set'].init = function() {
         input.connection.connect(shadow.outputConnection);
         shadow.render();
     }
-}; 
+};
+
+// DOMContentLoaded 이벤트 안에는 toolbox 수정 관련 코드만 남깁니다
+document.addEventListener('DOMContentLoaded', function() {
+    // 위치 블록 카테고리 수정
+    const positionCategory = document.querySelector('category[name="위치"]');
+    if (positionCategory) {
+        positionCategory.innerHTML = `
+            <block type="coordinate_pos">
+                <value name="X">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="Y">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="Z">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="world_pos">
+                <value name="X">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="Y">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="Z">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+        `;
+    }
+
+    // 반복 블록 카테고리 수정
+    const toolbox = document.getElementById('toolbox');
+    const basicCategory = toolbox.querySelector('category[name="반복"]');
+    if (basicCategory) {
+        const repeatBlock = basicCategory.querySelector('block[type="controls_repeat"]');
+        if (repeatBlock) {
+            repeatBlock.setAttribute('type', 'custom_repeat');
+        }
+    }
+}); 

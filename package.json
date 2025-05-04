@@ -2,6 +2,7 @@
   "name": "bedrock-agent",
   "version": "1.0.0",
   "main": "server/index.js",
+  "bin": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
@@ -24,5 +25,21 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.3"
+  },
+  "pkg": {
+    "assets": [
+      "client/**/*",
+      "public/**/*",
+      "blocks/**/*",
+      "shared/**/*",
+      "node_modules/figlet/fonts/**/*"
+    ]
+  },
+  "build": {
+    "appId": "com.bedrock.agent",
+    "productName": "BedrockAgent",
+    "win": {
+      "target": "nsis"
+    }
   }
 }

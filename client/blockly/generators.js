@@ -340,4 +340,30 @@ Blockly.JavaScript['controls_if'] = function(block) {
             ${code}
         })();
     `;
+};
+
+// 블록 채우기 코드 생성기
+Blockly.JavaScript['fill_blocks'] = function(block) {
+    const startPos = Blockly.JavaScript.valueToCode(block, 'START_POS', Blockly.JavaScript.ORDER_ATOMIC) || '{"x":0, "y":0, "z":0, "isAbsolute":false}';
+    const endPos = Blockly.JavaScript.valueToCode(block, 'END_POS', Blockly.JavaScript.ORDER_ATOMIC) || '{"x":0, "y":0, "z":0, "isAbsolute":false}';
+    const blockType = Blockly.JavaScript.valueToCode(block, 'BLOCK_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"stone"';
+    const fillMode = block.getFieldValue('FILL_MODE');
+    
+    return `
+        await (async () => {
+            if (shouldStop) {
+                console.log('실행이 중단되었습니다.');
+                return;
+            }
+            await new Promise(resolve => {
+                const start = JSON.parse(${startPos});
+                const end = JSON.parse(${endPos});
+                const tilde = start.isAbsolute ? '' : '~';
+                const command = \`fill \${tilde}\${start.x} \${tilde}\${start.y} \${tilde}\${start.z} \${tilde}\${end.x} \${tilde}\${end.y} \${tilde}\${end.z} \${${blockType}} ${fillMode}\`;
+                socket.emit("fill", command);
+                setTimeout(resolve, 150);
+                console.log('블록 채우기:', command);
+            });
+        })();
+    `;
 }; 
