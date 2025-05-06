@@ -42,3 +42,20 @@ http://localhost:3000
 ## 라이선스
 
 MIT License 
+
+## 마인크래프트 베드락 에디션(Windows)에서 로컬 서버 연결 허용
+
+Microsoft Store에서 설치한 마인크래프트 베드락 에디션(UWP 앱)은 보안상 기본적으로 localhost(127.0.0.1)로의 네트워크 접근이 차단되어 있습니다. 
+
+**아래 명령어를 반드시 관리자 권한 명령 프롬프트에서 실행해 주세요!**
+
+```bash
+CheckNetIsolation LoopbackExempt -a -n="Microsoft.MinecraftUWP_8wekyb3d8bbwe"
+```
+
+이 명령어를 실행하면 마인크래프트가 여러분의 서버(이 프로그램)와 정상적으로 통신할 수 있습니다.
+
+- 예외 목록 확인:  
+  `CheckNetIsolation LoopbackExempt -s`
+- 예외 삭제:  
+  `CheckNetIsolation LoopbackExempt -d -n="Microsoft.MinecraftUWP_8wekyb3d8bbwe"` 
