@@ -832,6 +832,22 @@ Blockly.Blocks['custom_repeat'] = {
     }
 };
 
+// 블록 탐지 블록 정의
+Blockly.Blocks['block_detect'] = {
+    init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("Position")
+            .appendField("블록 탐지:");
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck(["String", "BlockType"])
+            .appendField("위치:");
+        this.setOutput(true, "Boolean");
+        this.setColour('#459197');
+        this.setTooltip("지정된 위치에 특정 블록이 있는지 확인합니다");
+        this.setStyle('logic_blocks');
+    }
+};
+
 // 채팅창에 말하기 블록 수정
 Blockly.Blocks['text_print'] = {
     init: function() {

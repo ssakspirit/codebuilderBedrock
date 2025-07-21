@@ -337,7 +337,31 @@
             </block>            
         </category>
         <category name="논리" colour="#459197">
-            <block type="controls_if"></block>            
+            <block type="controls_if"></block>
+            <block type="block_detect">
+                <value name="POSITION">
+                    <block type="coordinate_pos">
+                        <value name="X">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="Y">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="Z">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                    </block>
+                </value>
+                <value name="BLOCK_TYPE">
+                    <shadow type="block_type"></shadow>
+                </value>
+            </block>            
             <block type="logic_compare">
                 <field name="OP">EQ</field>
                 <value name="A">

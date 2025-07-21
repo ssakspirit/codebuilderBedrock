@@ -103,6 +103,8 @@ async function start() {
 
             let minecraftSlot = 1;
             let commandBlocks = new Map();
+            let pendingBlockDetect = false;
+            let blockDetectResponseCount = 0;
 
             // Socket.IO 연결 처리
             io.on('connection', (clientSocket) => {
@@ -273,6 +275,22 @@ async function start() {
                     send(command);
                     console.log('🏗️ 블록 채우기:', command);
                 });
+
+                // 블록 탐지 명령어 처리
+                clientSocket.on("blockDetect", (data) => {
+                    console.log('🔍 블록 탐지 요청:', data.command);
+                    
+                    // 블록 탐지 상태 설정
+                    pendingBlockDetect = true;
+                    blockDetectResponseCount = 0;
+                    
+                    // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
+                    send('gamerule sendcommandfeedback true');
+                    setTimeout(() => {
+                        send(data.command);
+                        console.log('🔍 블록 탐지 명령어 전송:', data.command);
+                    }, 50);
+                });
             });       
 
 
@@ -301,6 +319,65 @@ async function start() {
                             console.log('❌ 일치하는 명령어가 없습니다');
                         }
                         console.log('=========================\n');
+                    }
+                    
+                    // 명령어 응답 처리 (블록 탐지 등)
+                    if (data.header.messagePurpose === 'commandResponse') {
+                        const statusCode = data.body.statusCode;
+                        const success = statusCode === 0;
+                        const commandLine = data.body.commandLine || '';
+                        
+                        console.log('🔍 명령어 응답 수신:');
+                        console.log('  - 명령어:', commandLine);
+                        console.log('  - 상태 코드:', statusCode);
+                        console.log('  - 성공 여부:', success);
+                        console.log('  - 블록 탐지 대기 중:', pendingBlockDetect);
+                        
+                        // 블록 탐지가 대기 중이고 명령어 응답이 온 경우
+                        if (pendingBlockDetect) {
+                            blockDetectResponseCount++;
+                            console.log('🔍 응답 순서:', blockDetectResponseCount);
+                            
+                            // 상태 코드가 0이 아닌 경우가 실제 testforblock 응답
+                            // (gamerule 명령어들은 모두 상태 코드 0)
+                            if (statusCode !== 0) {
+                                // testforblock 명령어의 실제 응답
+                                // 상태 코드가 0이 아니면 블록이 없거나 다른 블록
+                                const blockExists = false;
+                                console.log('🔍 블록 탐지 최종 결과 (실패 코드):', blockExists ? '블록 존재' : '블록 없음');
+                                console.log('🔍 상태 코드:', statusCode);
+                                
+                                // 결과 전송
+                                io.emit('blockDetectResult', blockExists);
+                                
+                                // 블록 탐지 상태 리셋
+                                pendingBlockDetect = false;
+                                blockDetectResponseCount = 0;
+                                
+                                // 명령어 피드백 다시 끄기
+                                setTimeout(() => {
+                                    send('gamerule sendcommandfeedback false');
+                                }, 100);
+                            } else if (blockDetectResponseCount >= 5) {
+                                // 너무 많은 응답이 왔는데도 0이 아닌 코드가 없으면 타임아웃
+                                console.log('🔍 블록 탐지 타임아웃 - 블록 존재로 간주');
+                                const blockExists = true; // 오류 코드가 없으면 성공으로 간주
+                                
+                                // 결과 전송
+                                io.emit('blockDetectResult', blockExists);
+                                
+                                // 블록 탐지 상태 리셋
+                                pendingBlockDetect = false;
+                                blockDetectResponseCount = 0;
+                                
+                                // 명령어 피드백 다시 끄기
+                                setTimeout(() => {
+                                    send('gamerule sendcommandfeedback false');
+                                }, 100);
+                            } else {
+                                console.log('🔍 gamerule 응답으로 추정, testforblock 응답 대기 중...');
+                            }
+                        }
                     }
                 } catch (error) {
                     console.error('메시지 처리 중 오류:', error);

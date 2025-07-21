@@ -366,4 +366,47 @@ Blockly.JavaScript['fill_blocks'] = function(block) {
             });
         })();
     `;
-}; 
+};
+
+// 블록 탐지 코드 생성기
+Blockly.JavaScript['block_detect'] = function(block) {
+    const position = Blockly.JavaScript.valueToCode(block, 'POSITION', Blockly.JavaScript.ORDER_ATOMIC) || '{"x":0, "y":0, "z":0, "isAbsolute":false}';
+    const blockType = Blockly.JavaScript.valueToCode(block, 'BLOCK_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"stone"';
+    
+    const code = `(await (async () => {
+        const pos = JSON.parse(${position});
+        const tilde = pos.isAbsolute ? '' : '~';
+        const command = \`testforblock \${tilde}\${pos.x} \${tilde}\${pos.y} \${tilde}\${pos.z} \${${blockType}}\`;
+        
+        console.log('🔍 블록 탐지 시작:', command);
+        
+        return new Promise(resolve => {
+            // 서버에서 블록 탐지 결과를 받는 리스너 설정
+            const resultListener = (result) => {
+                console.log('🔍 블록 탐지 결과 수신:', result);
+                socket.off('blockDetectResult', resultListener);
+                resolve(result);
+            };
+            socket.on('blockDetectResult', resultListener);
+            
+            // 명령어 실행
+            socket.emit("blockDetect", {
+                command: command,
+                position: pos,
+                blockType: ${blockType}
+            });
+            
+            // 타임아웃 설정 (3초 후 실패로 간주)
+            setTimeout(() => {
+                console.log('🔍 블록 탐지 타임아웃');
+                socket.off('blockDetectResult', resultListener);
+                resolve(false);
+            }, 3000);
+        });
+    })())`;
+    
+    return [code, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원
+Blockly.JavaScript.forBlock['block_detect'] = Blockly.JavaScript['block_detect']; 
