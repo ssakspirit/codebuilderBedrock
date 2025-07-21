@@ -637,6 +637,25 @@ Blockly.Blocks['world_pos'] = {
     }
 };
 
+// 바라보는 방향 기준 좌표 블록 정의  
+Blockly.Blocks['facing_pos'] = {
+    init: function() {
+        this.appendValueInput("X")
+            .setCheck(["Number", "Variable"])
+            .appendField("^");
+        this.appendValueInput("Y")
+            .setCheck(["Number", "Variable"])
+            .appendField("^");
+        this.appendValueInput("Z")
+            .setCheck(["Number", "Variable"])
+            .appendField("^");
+        this.setInputsInline(true);
+        this.setOutput(true, "Position");
+        this.setColour('#69b090');
+        this.setTooltip("바라보는 방향 기준의 상대 좌표를 지정합니다 (좌우/위아래/전후)");
+    }
+};
+
 // 블록 설치 명령 블록 정의
 Blockly.Blocks['set_block'] = {
     init: function() {
@@ -1117,56 +1136,4 @@ Blockly.Blocks['variables_set'].init = function() {
     }
 };
 
-// DOMContentLoaded 이벤트 안에는 toolbox 수정 관련 코드만 남깁니다
-document.addEventListener('DOMContentLoaded', function() {
-    // 위치 블록 카테고리 수정
-    const positionCategory = document.querySelector('category[name="위치"]');
-    if (positionCategory) {
-        positionCategory.innerHTML = `
-            <block type="coordinate_pos">
-                <value name="X">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Z">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="world_pos">
-                <value name="X">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Y">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="Z">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-        `;
-    }
-
-    // 반복 블록 카테고리 수정
-    const toolbox = document.getElementById('toolbox');
-    const basicCategory = toolbox.querySelector('category[name="반복"]');
-    if (basicCategory) {
-        const repeatBlock = basicCategory.querySelector('block[type="controls_repeat"]');
-        if (repeatBlock) {
-            repeatBlock.setAttribute('type', 'custom_repeat');
-        }
-    }
-}); 
+ 

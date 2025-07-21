@@ -70,6 +70,18 @@ Blockly.JavaScript.forBlock['world_pos'] = function(block) {
     return [`JSON.stringify(${posObj})`, Blockly.JavaScript.ORDER_ATOMIC];
 };
 
+// 바라보는 방향 기준 좌표 코드 생성기
+Blockly.JavaScript['facing_pos'] = function(block) {
+    const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const z = Blockly.JavaScript.valueToCode(block, 'Z', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const posObj = `{"x": Number(${x}), "y": Number(${y}), "z": Number(${z}), "isAbsolute": false, "isFacing": true}`;
+    return [`JSON.stringify(${posObj})`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원
+Blockly.JavaScript.forBlock['facing_pos'] = Blockly.JavaScript['facing_pos'];
+
 // 에이전트 이동 코드 생성기
 Blockly.JavaScript['agent_move'] = function(block) {
     const direction = block.getFieldValue('DIRECTION');
@@ -358,8 +370,9 @@ Blockly.JavaScript['fill_blocks'] = function(block) {
             await new Promise(resolve => {
                 const start = JSON.parse(${startPos});
                 const end = JSON.parse(${endPos});
-                const tilde = start.isAbsolute ? '' : '~';
-                const command = \`fill \${tilde}\${start.x} \${tilde}\${start.y} \${tilde}\${start.z} \${tilde}\${end.x} \${tilde}\${end.y} \${tilde}\${end.z} \${${blockType}} ${fillMode}\`;
+                const startPrefix = start.isFacing ? '^' : (start.isAbsolute ? '' : '~');
+                const endPrefix = end.isFacing ? '^' : (end.isAbsolute ? '' : '~');
+                const command = \`fill \${startPrefix}\${start.x} \${startPrefix}\${start.y} \${startPrefix}\${start.z} \${endPrefix}\${end.x} \${endPrefix}\${end.y} \${endPrefix}\${end.z} \${${blockType}} ${fillMode}\`;
                 socket.emit("fill", command);
                 setTimeout(resolve, 150);
                 console.log('블록 채우기:', command);
@@ -439,8 +452,8 @@ Blockly.JavaScript['mob_summon'] = function(block) {
         }
         await new Promise(resolve => {
             const pos = JSON.parse(${position});
-            const tilde = pos.isAbsolute ? '' : '~';
-            const command = \`summon \${${mobType}} \${tilde}\${pos.x} \${tilde}\${pos.y} \${tilde}\${pos.z}\`;
+            const prefix = pos.isFacing ? '^' : (pos.isAbsolute ? '' : '~');
+            const command = \`summon \${${mobType}} \${prefix}\${pos.x} \${prefix}\${pos.y} \${prefix}\${pos.z}\`;
             socket.emit("summon", command);
             setTimeout(resolve, 150);
             console.log('몹 소환:', command);

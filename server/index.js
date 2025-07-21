@@ -265,9 +265,9 @@ async function start() {
 
                 // 블록 설치 명령어 처리
                 clientSocket.on("setblock", (data) => {
-                    const tilde = data.isAbsolute ? '' : '~';
-                    send(`setblock ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z} ${data.blockType}`);
-                    console.log(`🏗️ 블록 설치: ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z}, 종류: ${data.blockType}`);
+                    const prefix = data.isFacing ? '^' : (data.isAbsolute ? '' : '~');
+                    send(`setblock ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z} ${data.blockType}`);
+                    console.log(`🏗️ 블록 설치: ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z}, 종류: ${data.blockType}`);
                 });
 
                 // 블록 채우기 명령어 처리
