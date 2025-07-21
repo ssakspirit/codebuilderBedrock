@@ -19,4 +19,21 @@ yarn-error.log
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+out/
+
+# Electron-builder output
+*.exe
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+
+# Temporary files
+*.tmp
+*.temp 

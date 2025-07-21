@@ -45,19 +45,6 @@ Blockly.Blocks['coordinate_pos'] = {
         this.setColour('#69b090');
         this.setTooltip("플레이어 기준의 상대 좌표를 지정합니다");
         this.setStyle('rounded_blocks');
-
-        // 새도우 블록으로 X, Y, Z 값을 각각 0으로 설정
-        ['X', 'Y', 'Z'].forEach(coord => {
-            const input = this.getInput(coord);
-            if (input && !input.connection.targetConnection) {
-                const shadow = this.workspace.newBlock('math_number');
-                shadow.setShadow(true);
-                shadow.initSvg();
-                shadow.setFieldValue('0', 'NUM');
-                input.connection.connect(shadow.outputConnection);
-                shadow.render();
-            }
-        });
     }
 };
 
@@ -76,19 +63,6 @@ Blockly.Blocks['world_pos'] = {
         this.setColour('#69b090');
         this.setTooltip("월드의 절대 좌표를 지정합니다");
         this.setStyle('rounded_blocks');
-
-        // 새도우 블록으로 X, Y, Z 값을 각각 0으로 설정
-        ['X', 'Y', 'Z'].forEach(coord => {
-            const input = this.getInput(coord);
-            if (input && !input.connection.targetConnection) {
-                const shadow = this.workspace.newBlock('math_number');
-                shadow.setShadow(true);
-                shadow.initSvg();
-                shadow.setFieldValue('0', 'NUM');
-                input.connection.connect(shadow.outputConnection);
-                shadow.render();
-            }
-        });
     }
 };
 
