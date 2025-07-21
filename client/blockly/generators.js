@@ -409,4 +409,41 @@ Blockly.JavaScript['block_detect'] = function(block) {
 };
 
 // forBlock 방식도 지원
-Blockly.JavaScript.forBlock['block_detect'] = Blockly.JavaScript['block_detect']; 
+Blockly.JavaScript.forBlock['block_detect'] = Blockly.JavaScript['block_detect'];
+
+// 몹 타입 코드 생성기
+Blockly.JavaScript['mob_type'] = function(block) {
+    const mobType = block.getFieldValue('MOB_TYPE');
+    return [`"${mobType}"`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// 마법 타입 코드 생성기
+Blockly.JavaScript['magic_type'] = function(block) {
+    const magicType = block.getFieldValue('MAGIC_TYPE');
+    return [`"${magicType}"`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원
+Blockly.JavaScript.forBlock['mob_type'] = Blockly.JavaScript['mob_type'];
+Blockly.JavaScript.forBlock['magic_type'] = Blockly.JavaScript['magic_type'];
+
+// 몹 소환 코드 생성기
+Blockly.JavaScript['mob_summon'] = function(block) {
+    const mobType = Blockly.JavaScript.valueToCode(block, 'MOB_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"pig"';
+    const position = Blockly.JavaScript.valueToCode(block, 'POSITION', Blockly.JavaScript.ORDER_ATOMIC) || '{"x":0, "y":0, "z":0, "isAbsolute":false}';
+    
+    return `(async () => {
+        if (shouldStop) {
+            console.log('실행이 중단되었습니다.');
+            return;
+        }
+        await new Promise(resolve => {
+            const pos = JSON.parse(${position});
+            const tilde = pos.isAbsolute ? '' : '~';
+            const command = \`summon \${${mobType}} \${tilde}\${pos.x} \${tilde}\${pos.y} \${tilde}\${pos.z}\`;
+            socket.emit("summon", command);
+            setTimeout(resolve, 150);
+            console.log('몹 소환:', command);
+        });
+    })();\n`;
+}; 

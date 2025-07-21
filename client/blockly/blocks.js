@@ -232,6 +232,158 @@ const MINECRAFT_BLOCKS = [
 ];
 
 /**
+ * 마인크래프트 몹 타입 목록
+ * 카테고리별로 정리된 몹 리스트
+ */
+const MINECRAFT_MOBS = [
+    // 우호적 몹
+    ["소", "cow"],
+    ["돼지", "pig"],
+    ["양", "sheep"],
+    ["닭", "chicken"],
+    ["토끼", "rabbit"],
+    ["늑대", "wolf"],
+    ["고양이", "cat"],
+    ["말", "horse"],
+    ["당나귀", "donkey"],
+    ["노새", "mule"],
+    ["라마", "llama"],
+    ["상인 라마", "trader_llama"],
+    ["오실롯", "ocelot"],
+    ["여우", "fox"],
+    ["곰", "polar_bear"],
+    ["판다", "panda"],
+    ["박쥐", "bat"],
+    ["오징어", "squid"],
+    ["발광 오징어", "glow_squid"],
+    ["코드", "cod"],
+    ["연어", "salmon"],
+    ["열대어", "tropical_fish"],
+    ["복어", "pufferfish"],
+    ["돌고래", "dolphin"],
+    ["거북이", "turtle"],
+    ["아홀로틀", "axolotl"],
+    ["개구리", "frog"],
+    ["올챙이", "tadpole"],
+    ["앵무새", "parrot"],
+    ["벌", "bee"],
+    ["철골렘", "iron_golem"],
+    ["눈골렘", "snow_golem"],
+    ["주민", "villager"],
+    ["떠돌이 상인", "wandering_trader"],
+    
+    // 중립적 몹
+    ["좀비 피글린", "zombie_piglin"],
+    ["엔더맨", "enderman"],
+    ["거미", "spider"],
+    ["피글린", "piglin"],
+    ["피글린 브루트", "piglin_brute"],
+    ["염소", "goat"],
+    
+    // 적대적 몹
+    ["좀비", "zombie"],
+    ["허스크", "husk"],
+    ["좀비 주민", "zombie_villager"],
+    ["드라운드", "drowned"],
+    ["스켈레톤", "skeleton"],
+    ["스트레이", "stray"],
+    ["위더 스켈레톤", "wither_skeleton"],
+    ["크리퍼", "creeper"],
+    ["마녀", "witch"],
+    ["슬라임", "slime"],
+    ["마그마 큐브", "magma_cube"],
+    ["엔더마이트", "endermite"],
+    ["실버피시", "silverfish"],
+    ["가디언", "guardian"],
+    ["엘더 가디언", "elder_guardian"],
+    ["셜커", "shulker"],
+    ["팬텀", "phantom"],
+    ["조케이", "jockey"],
+    ["약탈자", "pillager"],
+    ["소환사", "evoker"],
+    ["변명자", "vindicator"],
+    ["파괴수", "ravager"],
+    ["위더", "wither"],
+    ["엔더드래곤", "ender_dragon"],
+    ["블레이즈", "blaze"],
+    ["가스트", "ghast"],
+    ["호글린", "hoglin"],
+    ["좀글린", "zoglin"],
+    ["스트라이더", "strider"],
+    ["위더링", "wither_skeleton"],
+    ["바스크", "vex"],
+    ["워든", "warden"],
+    ["알레이", "allay"],
+    
+    // 보스 몹
+    ["엔더드래곤", "ender_dragon"],
+    ["위더", "wither"],
+    ["엘더 가디언", "elder_guardian"],
+    ["워든", "warden"]
+];
+
+/**
+ * 마인크래프트 마법/엔티티 목록
+ * 소환 가능한 마법과 특수 엔티티들
+ */
+const MAGIC_SPELLS = [
+    // 투사체/마법
+    ["화살", "arrow"],
+    ["번개", "lightning_bolt"],
+    ["파이어볼", "fireball"],
+    ["작은 파이어볼", "small_fireball"],
+    ["드래곤 파이어볼", "dragon_fireball"],
+    ["눈덩이", "snowball"],
+    ["엔더 펄", "ender_pearl"],
+    ["경험치 구슬", "experience_orb"],
+    ["플레이어", "player"],
+    ["갑옷 거치대", "armor_stand"],
+    
+    // 특수 엔티티
+    ["보트", "boat"],
+    ["트롤리", "minecart"],
+    ["상자가 든 트롤리", "chest_minecart"],
+    ["화약이 든 트롤리", "tnt_minecart"],
+    ["화로가 든 트롤리", "furnace_minecart"],
+    ["깔때기가 든 트롤리", "hopper_minecart"],
+    ["아이템", "item"],
+    ["떨어지는 블록", "falling_block"],
+    ["그림", "painting"],
+    ["아이템 프레임", "item_frame"],
+    ["발광 아이템 프레임", "glow_item_frame"],
+    
+    // 폭발물
+    ["TNT", "tnt"],
+    ["크리퍼 폭발", "creeper"],
+    ["엔드 크리스탈", "end_crystal"],
+    
+    // 이동 수단
+    ["말", "horse"],
+    ["돼지", "pig"],
+    ["스트라이더", "strider"],
+    
+    // 환경 효과
+    ["구름", "area_effect_cloud"],
+    ["가스트 파이어볼", "ghast_fireball"],
+    ["샬커 총알", "shulker_bullet"],
+    ["위더 두개골", "wither_skull"],
+    ["위더 스컬 (위험)", "wither_skull_dangerous"],
+    
+    // 특수 마법
+    ["순간이동", "enderman"],
+    ["투명화", "potion"],
+    ["치유", "splash_potion"],
+    ["지속 물약", "lingering_potion"],
+    
+    // 소환진/의식
+    ["마법진", "evoker_fangs"],
+    ["베쓰", "vex"],
+    ["위더 소환", "wither"],
+    ["철골렘 소환", "iron_golem"],
+    ["눈골렘 소환", "snow_golem"]
+];
+
+/**
  * 검색 가능한 드롭다운 필드 클래스
  * Blockly의 기본 FieldDropdown을 확장하여 검색 기능을 추가합니다.
  */
@@ -461,9 +613,9 @@ Blockly.Blocks['coordinate_pos'] = {
             .appendField("~");
         this.setInputsInline(true);
         this.setOutput(true, "Position");
-        this.setColour('#69b090');
         this.setTooltip("플레이어 기준의 상대 좌표를 지정합니다");
         this.setStyle('rounded_blocks');
+        this.setColour('#69b090');
     }
 };
 
@@ -479,9 +631,9 @@ Blockly.Blocks['world_pos'] = {
             .setCheck(["Number", "Variable"]);
         this.setInputsInline(true);
         this.setOutput(true, "Position");
-        this.setColour('#69b090');
         this.setTooltip("월드의 절대 좌표를 지정합니다");
         this.setStyle('rounded_blocks');
+        this.setColour('#69b090');
     }
 };
 
@@ -842,9 +994,52 @@ Blockly.Blocks['block_detect'] = {
             .setCheck(["String", "BlockType"])
             .appendField("위치:");
         this.setOutput(true, "Boolean");
-        this.setColour('#459197');
+        this.setColour('#7ABB55');
         this.setTooltip("지정된 위치에 특정 블록이 있는지 확인합니다");
-        this.setStyle('logic_blocks');
+        this.setStyle('rounded_blocks');
+    }
+};
+
+// 몹 타입 선택 블록 정의
+Blockly.Blocks['mob_type'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("몹:")
+            .appendField(new FieldSearchableDropdown(MINECRAFT_MOBS), "MOB_TYPE");
+        this.setOutput(true, ["String", "MobType"]);
+        this.setTooltip("소환할 몹의 종류를 선택합니다 (검색 가능)");
+        this.setStyle('rounded_blocks');
+        this.setColour('#764bbc');
+    }
+};
+
+// 마법 타입 선택 블록 정의
+Blockly.Blocks['magic_type'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("마법:")
+            .appendField(new FieldSearchableDropdown(MAGIC_SPELLS), "MAGIC_TYPE");
+        this.setOutput(true, ["String", "MagicType"]);
+        this.setTooltip("소환할 마법/엔티티의 종류를 선택합니다 (검색 가능)");
+        this.setStyle('rounded_blocks');
+        this.setColour('#764bbc');
+    }
+};
+
+// 몹 소환 블록 정의
+Blockly.Blocks['mob_summon'] = {
+    init: function() {
+        this.appendValueInput("MOB_TYPE")
+            .setCheck(["String", "MobType"])
+            .appendField("소환");
+        this.appendValueInput("POSITION")
+            .setCheck("Position")
+            .appendField("위치");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setTooltip("지정된 위치에 몹을 소환합니다");
+        this.setStyle('rounded_blocks');
+        this.setColour('#764bbc');
     }
 };
 

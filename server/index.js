@@ -291,6 +291,12 @@ async function start() {
                         console.log('🔍 블록 탐지 명령어 전송:', data.command);
                     }, 50);
                 });
+
+                // 몹 소환 명령어 처리
+                clientSocket.on("summon", (command) => {
+                    send(command);
+                    console.log('👹 몹 소환:', command);
+                });
             });       
 
 
