@@ -103,6 +103,7 @@ async function start() {
 
             let minecraftSlot = 1;
             let commandBlocks = new Map();
+            let itemBlocks = new Map(); // item -> {blockId, socket}
             let pendingBlockDetect = false;
             let blockDetectResponseCount = 0;
 
@@ -125,6 +126,54 @@ async function start() {
                             console.log(`• "${command}" (ID: ${blockData.blockId})`);
                         }
                         console.log('=========================\n');
+                    }
+                });
+
+                // 아이템 획득 명령어 업데이트 처리
+                clientSocket.on('updateItemUseCommand', (data) => {
+                    console.log('🔍 updateItemUseCommand 수신된 데이터:', data);
+                    if (data && data.item) {
+                        // 같은 블록 ID를 가진 이전 아이템들을 제거
+                        const itemsToRemove = [];
+                        for (let [item, blockData] of itemBlocks.entries()) {
+                            if (blockData.blockId === data.blockId) {
+                                itemsToRemove.push(item);
+                            }
+                        }
+                        itemsToRemove.forEach(item => {
+                            itemBlocks.delete(item);
+                            console.log('🗑️ 이전 아이템 제거:', item);
+                        });
+                        
+                        // 이미 같은 아이템이 등록되어 있는지 확인
+                        if (itemBlocks.has(data.item)) {
+                            console.log('❌ 중복 아이템 등록 시도 거부:', data.item);
+                            console.log('이미 등록된 블록 ID:', itemBlocks.get(data.item).blockId);
+                            clientSocket.emit('itemRegistrationError', {
+                                error: '같은 아이템에 대한 블록이 이미 존재합니다.',
+                                item: data.item,
+                                existingBlockId: itemBlocks.get(data.item).blockId
+                            });
+                            return;
+                        }
+                        
+                        // 새로운 아이템 등록
+                        itemBlocks.set(data.item, {
+                            blockId: data.blockId,
+                            socket: clientSocket
+                        });
+                        
+                        console.log('\n=== 아이템 획득 등록 ===');
+                        console.log('등록된 아이템:', data.item);
+                        console.log('블록 ID:', data.blockId);
+                        console.log('총 등록된 아이템 수:', itemBlocks.size);
+                        console.log('------------------------');
+                        for (let [item, blockData] of itemBlocks.entries()) {
+                            console.log(`• "${item}" (ID: ${blockData.blockId})`);
+                        }
+                        console.log('======================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 아이템 데이터:', data);
                     }
                 });
 
@@ -327,6 +376,50 @@ async function start() {
                         console.log('=========================\n');
                     }
                     
+                    if (data.header.eventName === 'ItemAcquired') {
+                        console.log('\n=== 아이템 획득 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+                        
+                        // 아이템 타입 추출 (ItemAcquired 이벤트 구조에 맞게)
+                        let itemType = null;
+                        if (data.body.item && data.body.item.id) {
+                            itemType = data.body.item.id;
+                        } else if (data.body.item && data.body.item.itemType) {
+                            itemType = data.body.item.itemType;
+                        } else if (data.body.itemType) {
+                            itemType = data.body.itemType;
+                        } else if (data.body.item && data.body.item.type) {
+                            itemType = data.body.item.type;
+                        } else if (data.body.item) {
+                            itemType = data.body.item;
+                        }
+                        
+                        console.log('획득한 아이템:', itemType);
+                        
+                        if (itemType) {
+                            // 등록된 아이템 확인
+                            const itemData = itemBlocks.get(itemType);
+                            if (itemData) {
+                                console.log('✅ 아이템 획득 코드 실행 시작');
+                                console.log('------------------------');
+                                itemData.socket.emit('executeItemCommands', itemData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 아이템 코드가 없습니다');
+                                console.log('등록된 아이템들:', Array.from(itemBlocks.keys()));
+                            }
+                        } else {
+                            console.log('❌ 아이템 타입을 찾을 수 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+                    
+                    // 추가 아이템 관련 이벤트 처리
+                    if (['PlayerInteract', 'ItemUsed', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
+                        console.log(`\n=== ${data.header.eventName} 이벤트 수신 ===`);
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+                        console.log('===========================================\n');
+                    }
+                    
                     // 명령어 응답 처리 (블록 탐지 등)
                     if (data.header.messagePurpose === 'commandResponse') {
                         const statusCode = data.body.statusCode;
@@ -508,6 +601,35 @@ async function start() {
                     "eventName": "PlayerMessage"
                 }
             }));
+
+            // ItemAcquired 이벤트 구독 (아이템 획득)
+            socket.send(JSON.stringify({
+                "header": {
+                    "version": 1,
+                    "requestId": uuid.v4(),
+                    "messageType": "commandRequest",
+                    "messagePurpose": "subscribe"
+                },
+                "body": {
+                    "eventName": "ItemAcquired"
+                }
+            }));
+
+            // 추가 이벤트들 구독 (아이템 관련)
+            const additionalEvents = ['PlayerInteract', 'ItemUsed', 'PlayerInteractWithEntity', 'ItemSelected', 'ItemDropped', 'ItemCrafted'];
+            additionalEvents.forEach(eventName => {
+                socket.send(JSON.stringify({
+                    "header": {
+                        "version": 1,
+                        "requestId": uuid.v4(),
+                        "messageType": "commandRequest",
+                        "messagePurpose": "subscribe"
+                    },
+                    "body": {
+                        "eventName": eventName
+                    }
+                }));
+            });
 
             socket.on("close", () => {
                 figlet('Connection', function (err, data) {

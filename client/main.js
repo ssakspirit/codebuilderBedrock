@@ -4,6 +4,19 @@ let workspace;
 let isExecuting = false;  // 실행 상태를 추적하는 변수
 let shouldStop = false;   // 중지 신호를 위한 변수
 
+// 소켓 연결 디버깅
+socket.on('connect', function() {
+    console.log('✅ 서버에 연결되었습니다!', socket.id);
+});
+
+socket.on('disconnect', function() {
+    console.log('❌ 서버와 연결이 끊어졌습니다!');
+});
+
+socket.on('connect_error', function(error) {
+    console.error('🔥 연결 에러:', error);
+});
+
 // 블록 스타일 정의
 Blockly.Theme.defineTheme('custom_theme', {
     'base': Blockly.Themes.Classic,
@@ -192,14 +205,13 @@ function initBlockly() {
             event.type == Blockly.Events.BLOCK_DELETE) {
             
             const blocks = workspace.getTopBlocks(true);
-            const eventBlocks = blocks.filter(block => block.type === 'on_chat_command');
             
-            // 중복 명령어 검사
+            // 채팅 명령어 블록 처리
+            const chatCommandBlocks = blocks.filter(block => block.type === 'on_chat_command');
             const commands = new Set();
-            eventBlocks.forEach(block => {
+            chatCommandBlocks.forEach(block => {
                 const command = block.getFieldValue('COMMAND');
                 if (commands.has(command)) {
-                    // 중복된 명령어가 있으면 경고 표시
                     showNotification('중복된 명령어가 있습니다!');
                     return;
                 }
@@ -208,6 +220,20 @@ function initBlockly() {
                 const blockId = block.id;
                 socket.emit('updateExecutionCommand', { command, blockId });
             });
+            
+            // 아이템 사용 블록 처리
+            const itemUseBlocks = blocks.filter(block => block.type === 'on_item_use');
+            itemUseBlocks.forEach(block => {
+                const itemInput = block.getInputTargetBlock('ITEM');
+                if (itemInput && itemInput.type === 'item_type') {
+                    const itemType = itemInput.getFieldValue('ITEM_TYPE');
+                    const blockId = block.id;
+                    
+                    console.log('아이템 블록 감지:', { item: itemType, blockId });
+                    socket.emit('updateItemUseCommand', { item: itemType, blockId });
+                    console.log('서버로 아이템 등록 전송 완료:', itemType);
+                }
+            });
         }
     });
 }
@@ -215,6 +241,77 @@ function initBlockly() {
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
     initBlockly();
+});
+
+// 아이템 등록 에러 처리
+socket.on('itemRegistrationError', function(data) {
+    console.error('❌ 아이템 등록 에러:', data.error);
+    console.error('중복 아이템:', data.item);
+    showNotification(`❌ ${data.item} 아이템은 이미 등록되어 있습니다!`);
+});
+
+// 아이템 사용 이벤트 처리
+socket.on('executeItemCommands', async function(blockId) {
+    if (isExecuting) {
+        showNotification('이미 실행 중입니다.');
+        return;
+    }
+    
+    const blocks = workspace.getTopBlocks(true);
+    const eventBlocks = blocks.filter(block => block.type === 'on_item_use');
+    
+    const targetBlock = eventBlocks.find(block => block.id === blockId);
+    if (targetBlock) {
+        try {
+            isExecuting = true;
+            shouldStop = false;
+            console.log('\n=== 아이템 사용 실행 시작 ===');
+            console.log('블록 ID:', blockId);
+            console.log('------------------------');
+            showNotification('아이템 사용 명령을 실행합니다...');
+            
+            let code = '';
+            let nextBlock = targetBlock.getInputTargetBlock('NEXT');
+            
+            while (nextBlock) {
+                if (shouldStop) {
+                    console.log('실행이 중단되었습니다.');
+                    showNotification('실행이 중단되었습니다.');
+                    isExecuting = false;
+                    return;
+                }
+                
+                // 코드 생성기 재초기화
+                Blockly.JavaScript.init(workspace);
+                
+                if (Blockly.JavaScript[nextBlock.type]) {
+                    code += Blockly.JavaScript[nextBlock.type](nextBlock);
+                } else {
+                    console.warn(`블록 타입 "${nextBlock.type}"에 대한 코드 생성기가 없습니다.`);
+                }
+                
+                nextBlock = nextBlock.getNextBlock();
+            }
+            
+            // 디버깅을 위한 생성된 코드 출력
+            console.log('생성된 코드:', code);
+            
+            await eval('(async () => { ' + code + ' })()');
+            console.log('------------------------');
+            console.log('=== 실행 완료 ===\n');
+            showNotification('아이템 사용 실행이 완료되었습니다.');
+        } catch (e) {
+            console.log('❌ 실행 중 오류 발생');
+            console.error('오류 내용:', e);
+            showNotification('실행 중 오류가 발생했습니다: ' + e.message);
+        } finally {
+            isExecuting = false;
+            shouldStop = false;
+        }
+    } else {
+        console.log('❌ 아이템 사용 블록을 찾을 수 없음');
+        showNotification('해당 아이템 사용 블록을 찾을 수 없습니다.');
+    }
 });
 
 // 명령어 실행 이벤트 처리

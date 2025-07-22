@@ -25,6 +25,12 @@ Blockly.JavaScript.forBlock['block_type'] = function(block) {
     return [`"${blockType}"`, Blockly.JavaScript.ORDER_ATOMIC];
 };
 
+// 아이템 타입 코드 생성기
+Blockly.JavaScript.forBlock['item_type'] = function(block) {
+    const itemType = block.getFieldValue('ITEM_TYPE');
+    return [`"${itemType}"`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
 // 블록 설치 코드 생성기
 Blockly.JavaScript['set_block'] = function(block) {
     const position = Blockly.JavaScript.valueToCode(block, 'POSITION', Blockly.JavaScript.ORDER_ATOMIC) || '{"x":0, "y":0, "z":0, "isAbsolute":false}';
@@ -256,6 +262,12 @@ Blockly.JavaScript['on_chat_command'] = function(block) {
     const nextCode = Blockly.JavaScript.statementToCode(block, 'NEXT');
     
     socket.emit('updateExecutionCommand', { command, blockId });
+    return nextCode;
+};
+
+// 아이템 획득 코드 생성기
+Blockly.JavaScript.forBlock['on_item_use'] = function(block) {
+    const nextCode = Blockly.JavaScript.statementToCode(block, 'NEXT');
     return nextCode;
 };
 

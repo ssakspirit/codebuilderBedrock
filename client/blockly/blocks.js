@@ -383,6 +383,148 @@ const MAGIC_SPELLS = [
     ["눈골렘 소환", "snow_golem"]
 ];
 
+// 마인크래프트 아이템 목록
+const MINECRAFT_ITEMS = [
+    // 도구류
+    ["나무 검", "wooden_sword"],
+    ["돌 검", "stone_sword"],
+    ["철 검", "iron_sword"],
+    ["금 검", "golden_sword"],
+    ["다이아몬드 검", "diamond_sword"],
+    ["네더라이트 검", "netherite_sword"],
+    
+    ["나무 도끼", "wooden_axe"],
+    ["돌 도끼", "stone_axe"],
+    ["철 도끼", "iron_axe"],
+    ["금 도끼", "golden_axe"],
+    ["다이아몬드 도끼", "diamond_axe"],
+    ["네더라이트 도끼", "netherite_axe"],
+    
+    ["나무 곡괭이", "wooden_pickaxe"],
+    ["돌 곡괭이", "stone_pickaxe"],
+    ["철 곡괭이", "iron_pickaxe"],
+    ["금 곡괭이", "golden_pickaxe"],
+    ["다이아몬드 곡괭이", "diamond_pickaxe"],
+    ["네더라이트 곡괭이", "netherite_pickaxe"],
+    
+    ["나무 삽", "wooden_shovel"],
+    ["돌 삽", "stone_shovel"],
+    ["철 삽", "iron_shovel"],
+    ["금 삽", "golden_shovel"],
+    ["다이아몬드 삽", "diamond_shovel"],
+    ["네더라이트 삽", "netherite_shovel"],
+    
+    ["나무 괭이", "wooden_hoe"],
+    ["돌 괭이", "stone_hoe"],
+    ["철 괭이", "iron_hoe"],
+    ["금 괭이", "golden_hoe"],
+    ["다이아몬드 괭이", "diamond_hoe"],
+    ["네더라이트 괭이", "netherite_hoe"],
+    
+    // 갑옷류
+    ["가죽 투구", "leather_helmet"],
+    ["가죽 흉갑", "leather_chestplate"],
+    ["가죽 바지", "leather_leggings"],
+    ["가죽 신발", "leather_boots"],
+    
+    ["체인 투구", "chainmail_helmet"],
+    ["체인 흉갑", "chainmail_chestplate"],
+    ["체인 바지", "chainmail_leggings"],
+    ["체인 신발", "chainmail_boots"],
+    
+    ["철 투구", "iron_helmet"],
+    ["철 흉갑", "iron_chestplate"],
+    ["철 바지", "iron_leggings"],
+    ["철 신발", "iron_boots"],
+    
+    ["금 투구", "golden_helmet"],
+    ["금 흉갑", "golden_chestplate"],
+    ["금 바지", "golden_leggings"],
+    ["금 신발", "golden_boots"],
+    
+    ["다이아몬드 투구", "diamond_helmet"],
+    ["다이아몬드 흉갑", "diamond_chestplate"],
+    ["다이아몬드 바지", "diamond_leggings"],
+    ["다이아몬드 신발", "diamond_boots"],
+    
+    ["네더라이트 투구", "netherite_helmet"],
+    ["네더라이트 흉갑", "netherite_chestplate"],
+    ["네더라이트 바지", "netherite_leggings"],
+    ["네더라이트 신발", "netherite_boots"],
+    
+    // 음식류
+    ["사과", "apple"],
+    ["황금 사과", "golden_apple"],
+    ["마법이 부여된 황금 사과", "enchanted_golden_apple"],
+    ["빵", "bread"],
+    ["생 돼지고기", "porkchop"],
+    ["구운 돼지고기", "cooked_porkchop"],
+    ["생 쇠고기", "beef"],
+    ["스테이크", "cooked_beef"],
+    ["생 닭고기", "chicken"],
+    ["구운 닭고기", "cooked_chicken"],
+    ["생 양고기", "mutton"],
+    ["구운 양고기", "cooked_mutton"],
+    ["생 대구", "cod"],
+    ["구운 대구", "cooked_cod"],
+    ["생 연어", "salmon"],
+    ["구운 연어", "cooked_salmon"],
+    ["감자", "potato"],
+    ["구운 감자", "baked_potato"],
+    ["당근", "carrot"],
+    ["황금 당근", "golden_carrot"],
+    
+    // 재료류
+    ["나무막대", "stick"],
+    ["실", "string"],
+    ["가죽", "leather"],
+    ["종이", "paper"],
+    ["책", "book"],
+    ["화약", "gunpowder"],
+    ["레드스톤 가루", "redstone"],
+    ["글로우스톤 가루", "glowstone_dust"],
+    ["엔더 펄", "ender_pearl"],
+    ["블레이즈 막대", "blaze_rod"],
+    ["블레이즈 가루", "blaze_powder"],
+    ["마그마 크림", "magma_cream"],
+    ["슬라임볼", "slime_ball"],
+    ["프리즈머린 조각", "prismarine_shard"],
+    ["프리즈머린 크리스털", "prismarine_crystals"],
+    
+    // 포션류
+    ["물병", "water_bottle"],
+    ["일반 포션", "potion"],
+    ["투척용 포션", "splash_potion"],
+    ["잔류형 포션", "lingering_potion"],
+    ["회복 포션", "healing_potion"],
+    ["힘 포션", "strength_potion"],
+    ["속도 포션", "swiftness_potion"],
+    ["화염 저항 포션", "fire_resistance_potion"],
+    ["재생 포션", "regeneration_potion"],
+    ["야간 투시 포션", "night_vision_potion"],
+    
+    // 기타 아이템
+    ["활", "bow"],
+    ["화살", "arrow"],
+    ["석탄", "coal"],
+    ["목탄", "charcoal"],
+    ["다이아몬드", "diamond"],
+    ["에메랄드", "emerald"],
+    ["철 주괴", "iron_ingot"],
+    ["금 주괴", "gold_ingot"],
+    ["지도", "map"],
+    ["나침반", "compass"],
+    ["시계", "clock"],
+    ["낚시대", "fishing_rod"],
+    ["양동이", "bucket"],
+    ["물 양동이", "water_bucket"],
+    ["용암 양동이", "lava_bucket"],
+    ["우유", "milk_bucket"],
+    ["안장", "saddle"],
+    ["리드", "lead"],
+    ["이름표", "name_tag"]
+];
+
 /**
  * 검색 가능한 드롭다운 필드 클래스
  * Blockly의 기본 FieldDropdown을 확장하여 검색 기능을 추가합니다.
@@ -595,6 +737,19 @@ Blockly.Blocks['block_type'] = {
         this.setOutput(true, ["String", "BlockType"]);
         this.setColour('#7ABB55');
         this.setTooltip("설치할 블록의 종류를 선택합니다 (검색 가능)");
+        this.setStyle('rounded_blocks');
+    }
+};
+
+// 아이템 타입 블록 정의
+Blockly.Blocks['item_type'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("아이템:")
+            .appendField(new FieldSearchableDropdown(MINECRAFT_ITEMS), "ITEM_TYPE");
+        this.setOutput(true, ["String", "ItemType"]);
+        this.setColour('#7ABB55');
+        this.setTooltip("사용할 아이템의 종류를 선택합니다 (검색 가능)");
         this.setStyle('rounded_blocks');
     }
 };
@@ -925,6 +1080,21 @@ Blockly.Blocks['on_chat_command'] = {
         this.appendStatementInput('NEXT');
         this.setColour('#60A5FA');
         this.setTooltip("채팅창에 입력한 명령어로 코드를 실행합니다");
+        this.setStyle('hat_blocks');
+    }
+};
+
+// 아이템 획득 블록 정의
+Blockly.Blocks['on_item_use'] = {
+    init: function() {
+        this.appendValueInput('ITEM')
+            .setCheck(['String', 'ItemType'])
+            .appendField("아이템");
+        this.appendDummyInput()
+            .appendField("획득시");
+        this.appendStatementInput('NEXT');
+        this.setColour('#60A5FA');
+        this.setTooltip("특정 아이템을 인벤토리에 획득했을 때 코드를 실행합니다");
         this.setStyle('hat_blocks');
     }
 };
