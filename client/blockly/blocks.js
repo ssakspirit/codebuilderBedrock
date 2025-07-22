@@ -1099,6 +1099,36 @@ Blockly.Blocks['on_item_use'] = {
     }
 };
 
+// 블록 설치 감지 블록 정의
+Blockly.Blocks['on_block_placed'] = {
+    init: function() {
+        this.appendValueInput('BLOCK')
+            .setCheck(['String', 'BlockType'])
+            .appendField("블록");
+        this.appendDummyInput()
+            .appendField("설치시");
+        this.appendStatementInput('NEXT');
+        this.setColour('#7ABB55');
+        this.setTooltip("특정 블록을 설치했을 때 코드를 실행합니다");
+        this.setStyle('block_hat_blocks');
+    }
+};
+
+// 블록 파괴 감지 블록 정의
+Blockly.Blocks['on_block_broken'] = {
+    init: function() {
+        this.appendValueInput('BLOCK')
+            .setCheck(['String', 'BlockType'])
+            .appendField("블록");
+        this.appendDummyInput()
+            .appendField("파괴시");
+        this.appendStatementInput('NEXT');
+        this.setColour('#7ABB55');
+        this.setTooltip("특정 블록을 파괴했을 때 코드를 실행합니다");
+        this.setStyle('block_hat_blocks');
+    }
+};
+
 // 에이전트 텔레포트 블록 정의
 Blockly.Blocks['agent_tp_pos'] = {
     init: function() {

@@ -104,6 +104,8 @@ async function start() {
             let minecraftSlot = 1;
             let commandBlocks = new Map();
             let itemBlocks = new Map(); // item -> {blockId, socket}
+            let blockPlacedBlocks = new Map(); // blockType -> {blockId, socket}
+            let blockBrokenBlocks = new Map(); // blockType -> {blockId, socket}
             let pendingBlockDetect = false;
             let blockDetectResponseCount = 0;
 
@@ -175,6 +177,159 @@ async function start() {
                     } else {
                         console.log('❌ 유효하지 않은 아이템 데이터:', data);
                     }
+                });
+
+                // 블록 설치 명령어 업데이트 처리
+                clientSocket.on('updateBlockPlacedCommand', (data) => {
+                    console.log('🔍 updateBlockPlacedCommand 수신된 데이터:', data);
+                    if (data && data.blockType) {
+                        // 같은 블록 ID를 가진 이전 블록들을 제거
+                        const blocksToRemove = [];
+                        for (let [blockType, blockData] of blockPlacedBlocks.entries()) {
+                            if (blockData.blockId === data.blockId) {
+                                blocksToRemove.push(blockType);
+                            }
+                        }
+                        blocksToRemove.forEach(blockType => {
+                            blockPlacedBlocks.delete(blockType);
+                            console.log('🗑️ 이전 블록 제거:', blockType);
+                        });
+                        
+                        // 이미 같은 블록이 등록되어 있는지 확인
+                        if (blockPlacedBlocks.has(data.blockType)) {
+                            console.log('❌ 중복 블록 등록 시도 거부:', data.blockType);
+                            console.log('이미 등록된 블록 ID:', blockPlacedBlocks.get(data.blockType).blockId);
+                            clientSocket.emit('blockPlacedRegistrationError', {
+                                error: '같은 블록에 대한 명령이 이미 존재합니다.',
+                                blockType: data.blockType,
+                                existingBlockId: blockPlacedBlocks.get(data.blockType).blockId
+                            });
+                            return;
+                        }
+                        
+                        // 새로운 블록 등록
+                        blockPlacedBlocks.set(data.blockType, {
+                            blockId: data.blockId,
+                            socket: clientSocket
+                        });
+                        
+                        console.log('\n=== 블록 설치 감지 등록 ===');
+                        console.log('등록된 블록:', data.blockType);
+                        console.log('블록 ID:', data.blockId);
+                        console.log('총 등록된 블록 수:', blockPlacedBlocks.size);
+                        console.log('------------------------');
+                        for (let [blockType, blockData] of blockPlacedBlocks.entries()) {
+                            console.log(`• "${blockType}" (ID: ${blockData.blockId})`);
+                        }
+                        console.log('======================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 블록 데이터:', data);
+                    }
+                });
+
+                // 블록 파괴 명령어 업데이트 처리
+                clientSocket.on('updateBlockBrokenCommand', (data) => {
+                    console.log('🔍 updateBlockBrokenCommand 수신된 데이터:', data);
+                    if (data && data.blockType) {
+                        // 같은 블록 ID를 가진 이전 블록들을 제거
+                        const blocksToRemove = [];
+                        for (let [blockType, blockData] of blockBrokenBlocks.entries()) {
+                            if (blockData.blockId === data.blockId) {
+                                blocksToRemove.push(blockType);
+                            }
+                        }
+                        blocksToRemove.forEach(blockType => {
+                            blockBrokenBlocks.delete(blockType);
+                            console.log('🗑️ 이전 블록 파괴 감지 제거:', blockType);
+                        });
+                        
+                        // 이미 같은 블록이 등록되어 있는지 확인
+                        if (blockBrokenBlocks.has(data.blockType)) {
+                            console.log('❌ 중복 블록 파괴 등록 시도 거부:', data.blockType);
+                            console.log('이미 등록된 블록 ID:', blockBrokenBlocks.get(data.blockType).blockId);
+                            clientSocket.emit('blockBrokenRegistrationError', {
+                                error: '같은 블록에 대한 파괴 명령이 이미 존재합니다.',
+                                blockType: data.blockType,
+                                existingBlockId: blockBrokenBlocks.get(data.blockType).blockId
+                            });
+                            return;
+                        }
+                        
+                        // 새로운 블록 등록
+                        blockBrokenBlocks.set(data.blockType, {
+                            blockId: data.blockId,
+                            socket: clientSocket
+                        });
+                        
+                        console.log('\n=== 블록 파괴 감지 등록 ===');
+                        console.log('등록된 블록:', data.blockType);
+                        console.log('블록 ID:', data.blockId);
+                        console.log('총 등록된 블록 수:', blockBrokenBlocks.size);
+                        console.log('------------------------');
+                        for (let [blockType, blockData] of blockBrokenBlocks.entries()) {
+                            console.log(`• "${blockType}" (ID: ${blockData.blockId})`);
+                        }
+                        console.log('======================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 블록 파괴 데이터:', data);
+                    }
+                });
+
+                // 블록 등록 제거 처리
+                clientSocket.on('removeBlockRegistration', (data) => {
+                    console.log('🗑️ 블록 등록 제거 요청 수신:', data);
+                    
+                    const { blockType, blockId } = data;
+                    
+                    // 채팅 명령어 블록 제거
+                    if (blockType === 'on_chat_command') {
+                        for (let [command, blockData] of commandBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                commandBlocks.delete(command);
+                                console.log('✅ 채팅 명령어 제거:', command);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 아이템 사용 블록 제거
+                    if (blockType === 'on_item_use') {
+                        for (let [item, blockData] of itemBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                itemBlocks.delete(item);
+                                console.log('✅ 아이템 사용 제거:', item);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 블록 설치 감지 제거
+                    if (blockType === 'on_block_placed') {
+                        for (let [block, blockData] of blockPlacedBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                blockPlacedBlocks.delete(block);
+                                console.log('✅ 블록 설치 감지 제거:', block);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 블록 파괴 감지 제거
+                    if (blockType === 'on_block_broken') {
+                        for (let [block, blockData] of blockBrokenBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                blockBrokenBlocks.delete(block);
+                                console.log('✅ 블록 파괴 감지 제거:', block);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    console.log('현재 등록 상태:');
+                    console.log('- 채팅 명령어:', commandBlocks.size + '개');
+                    console.log('- 아이템 사용:', itemBlocks.size + '개');
+                    console.log('- 블록 설치:', blockPlacedBlocks.size + '개');
+                    console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
                 });
 
                 // 에이전트 명령어 처리
@@ -413,6 +568,76 @@ async function start() {
                         console.log('==========================\n');
                     }
                     
+                    if (data.header.eventName === 'BlockPlaced') {
+                        console.log('\n=== 블록 설치 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+                        
+                        // 블록 타입 추출 (BlockPlaced 이벤트 구조에 맞게)
+                        let blockType = null;
+                        if (data.body.block && data.body.block.id) {
+                            blockType = data.body.block.id;
+                        } else if (data.body.block && data.body.block.type) {
+                            blockType = data.body.block.type;
+                        } else if (data.body.blockType) {
+                            blockType = data.body.blockType;
+                        } else if (data.body.block) {
+                            blockType = data.body.block;
+                        }
+                        
+                        console.log('설치된 블록:', blockType);
+                        
+                        if (blockType) {
+                            // 등록된 블록 확인
+                            const blockData = blockPlacedBlocks.get(blockType);
+                            if (blockData) {
+                                console.log('✅ 블록 설치 코드 실행 시작');
+                                console.log('------------------------');
+                                blockData.socket.emit('executeBlockPlacedCommands', blockData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 블록 설치 코드가 없습니다');
+                                console.log('등록된 블록들:', Array.from(blockPlacedBlocks.keys()));
+                            }
+                        } else {
+                            console.log('❌ 블록 타입을 찾을 수 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+                    
+                    if (data.header.eventName === 'BlockBroken') {
+                        console.log('\n=== 블록 파괴 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+                        
+                        // 블록 타입 추출 (BlockBroken 이벤트 구조에 맞게)
+                        let blockType = null;
+                        if (data.body.block && data.body.block.id) {
+                            blockType = data.body.block.id;
+                        } else if (data.body.block && data.body.block.type) {
+                            blockType = data.body.block.type;
+                        } else if (data.body.blockType) {
+                            blockType = data.body.blockType;
+                        } else if (data.body.block) {
+                            blockType = data.body.block;
+                        }
+                        
+                        console.log('파괴된 블록:', blockType);
+                        
+                        if (blockType) {
+                            // 등록된 블록 확인
+                            const blockData = blockBrokenBlocks.get(blockType);
+                            if (blockData) {
+                                console.log('✅ 블록 파괴 코드 실행 시작');
+                                console.log('------------------------');
+                                blockData.socket.emit('executeBlockBrokenCommands', blockData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 블록 파괴 코드가 없습니다');
+                                console.log('등록된 블록들:', Array.from(blockBrokenBlocks.keys()));
+                            }
+                        } else {
+                            console.log('❌ 블록 타입을 찾을 수 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+                    
                     // 추가 아이템 관련 이벤트 처리
                     if (['PlayerInteract', 'ItemUsed', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
                         console.log(`\n=== ${data.header.eventName} 이벤트 수신 ===`);
@@ -612,6 +837,32 @@ async function start() {
                 },
                 "body": {
                     "eventName": "ItemAcquired"
+                }
+            }));
+
+            // BlockPlaced 이벤트 구독 (블록 설치)
+            socket.send(JSON.stringify({
+                "header": {
+                    "version": 1,
+                    "requestId": uuid.v4(),
+                    "messageType": "commandRequest",
+                    "messagePurpose": "subscribe"
+                },
+                "body": {
+                    "eventName": "BlockPlaced"
+                }
+            }));
+
+            // BlockBroken 이벤트 구독 (블록 파괴)
+            socket.send(JSON.stringify({
+                "header": {
+                    "version": 1,
+                    "requestId": uuid.v4(),
+                    "messageType": "commandRequest",
+                    "messagePurpose": "subscribe"
+                },
+                "body": {
+                    "eventName": "BlockBroken"
                 }
             }));
 

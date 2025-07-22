@@ -271,6 +271,18 @@ Blockly.JavaScript.forBlock['on_item_use'] = function(block) {
     return nextCode;
 };
 
+// 블록 설치 감지 코드 생성기
+Blockly.JavaScript.forBlock['on_block_placed'] = function(block) {
+    const nextCode = Blockly.JavaScript.statementToCode(block, 'NEXT');
+    return nextCode;
+};
+
+// 블록 파괴 감지 코드 생성기
+Blockly.JavaScript.forBlock['on_block_broken'] = function(block) {
+    const nextCode = Blockly.JavaScript.statementToCode(block, 'NEXT');
+    return nextCode;
+};
+
 // 커스텀 반복 명령 블록의 코드 생성기
 Blockly.JavaScript['custom_repeat'] = function(block) {
     const times = Blockly.JavaScript.valueToCode(block, 'TIMES', Blockly.JavaScript.ORDER_ATOMIC) || '0';
