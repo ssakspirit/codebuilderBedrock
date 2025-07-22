@@ -332,6 +332,12 @@ async function start() {
                     console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
                 });
 
+                // 일반 명령어 실행 처리
+                clientSocket.on("executeCommand", (command) => {
+                    console.log('💬 명령어 실행:', command);
+                    send(command);
+                });
+
                 // 에이전트 명령어 처리
                 clientSocket.on("spawn", () => {
                     send("agent create");

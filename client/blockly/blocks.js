@@ -1129,6 +1129,43 @@ Blockly.Blocks['on_block_broken'] = {
     }
 };
 
+// 대상 선택 블록 정의
+Blockly.Blocks['target_selector'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("대상:")
+            .appendField(new Blockly.FieldDropdown([
+                ["자신 (@s)", "@s"],
+                ["가장 가까운 플레이어 (@p)", "@p"], 
+                ["모든 플레이어 (@a)", "@a"],
+                ["랜덤 플레이어 (@r)", "@r"],
+                ["모든 엔티티 (@e)", "@e"]
+            ]), "TARGET");
+        this.setOutput(true, "String");
+        this.setColour('#764bbc');
+        this.setTooltip("명령어 대상을 선택합니다");
+    }
+};
+
+// 아이템 받기 블록 정의
+Blockly.Blocks['give_item'] = {
+    init: function() {
+        this.appendValueInput('TARGET')
+            .setCheck('String')
+            .appendField("아이템 주기: 대상");
+        this.appendValueInput('ITEM')
+            .setCheck(['String', 'ItemType'])
+            .appendField("아이템");
+        this.appendValueInput('COUNT')
+            .setCheck('Number')
+            .appendField("개수");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#764bbc');
+        this.setTooltip("플레이어에게 특정 아이템을 지정된 개수만큼 줍니다 (예: @s, @a, @p 또는 플레이어명)");
+    }
+};
+
 // 에이전트 텔레포트 블록 정의
 Blockly.Blocks['agent_tp_pos'] = {
     init: function() {

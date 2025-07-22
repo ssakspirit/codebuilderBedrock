@@ -309,6 +309,20 @@
                     </block>
                 </value>
             </block>
+            <block type="give_item">
+                <value name="TARGET">
+                    <shadow type="target_selector"></shadow>
+                </value>
+                <value name="ITEM">
+                    <shadow type="item_type"></shadow>
+                </value>
+                <value name="COUNT">
+                    <shadow type="math_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="target_selector"></block>
             <block type="mob_type"></block>
             <block type="magic_type"></block>
         </category>

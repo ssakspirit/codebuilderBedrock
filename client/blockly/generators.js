@@ -283,6 +283,28 @@ Blockly.JavaScript.forBlock['on_block_broken'] = function(block) {
     return nextCode;
 };
 
+// 아이템 받기 코드 생성기
+Blockly.JavaScript['give_item'] = function(block) {
+    const target = Blockly.JavaScript.valueToCode(block, 'TARGET', Blockly.JavaScript.ORDER_ATOMIC) || '"@s"';
+    const item = Blockly.JavaScript.valueToCode(block, 'ITEM', Blockly.JavaScript.ORDER_ATOMIC) || '"apple"';
+    const count = Blockly.JavaScript.valueToCode(block, 'COUNT', Blockly.JavaScript.ORDER_ATOMIC) || '1';
+    
+    return `
+        await (async () => {
+            if (shouldStop) {
+                console.log('실행이 중단되었습니다.');
+                return;
+            }
+            await new Promise(resolve => {
+                const command = \`give \${${target}} \${${item}} \${${count}}\`;
+                socket.emit("executeCommand", command);
+                setTimeout(resolve, 150);
+                console.log('아이템 지급 명령어:', command);
+            });
+        })();
+    `;
+};
+
 // 커스텀 반복 명령 블록의 코드 생성기
 Blockly.JavaScript['custom_repeat'] = function(block) {
     const times = Blockly.JavaScript.valueToCode(block, 'TIMES', Blockly.JavaScript.ORDER_ATOMIC) || '0';
@@ -463,6 +485,15 @@ Blockly.JavaScript['magic_type'] = function(block) {
 // forBlock 방식도 지원
 Blockly.JavaScript.forBlock['mob_type'] = Blockly.JavaScript['mob_type'];
 Blockly.JavaScript.forBlock['magic_type'] = Blockly.JavaScript['magic_type'];
+
+// 대상 선택 코드 생성기
+Blockly.JavaScript['target_selector'] = function(block) {
+    const target = block.getFieldValue('TARGET');
+    return [`"${target}"`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원
+Blockly.JavaScript.forBlock['target_selector'] = Blockly.JavaScript['target_selector'];
 
 // 몹 소환 코드 생성기
 Blockly.JavaScript['mob_summon'] = function(block) {
