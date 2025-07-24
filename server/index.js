@@ -27,6 +27,36 @@ async function findAvailablePort(startPort, endPort) {
     return null;
 }
 
+// 플레이어 명령어 실행을 위한 유틸리티 함수들
+function executeAsPlayer(player, command) {
+    if (player && player !== 'Unknown') {
+        // 베드락 에디션 execute 문법 (간단한 형태)
+        return `execute "${player}" ~ ~ ~ ${command}`;
+    }
+    return command;
+}
+
+function sendPlayerCommand(player, command, commandType = '명령어') {
+    // 입력 검증
+    if (!command || typeof command !== 'string') {
+        console.error(`❌ ${commandType} 오류: 유효하지 않은 명령어`, command);
+        return null;
+    }
+    
+    const finalCommand = executeAsPlayer(player, command);
+    
+    if (player && player !== 'Unknown') {
+        console.log(`🎮 ${commandType} 실행 (플레이어 컨텍스트):`);
+        console.log(`   플레이어: ${player}`);
+        console.log(`   원본 명령어: ${command}`);
+        console.log(`   최종 명령어: ${finalCommand}`);
+    } else {
+        console.log(`🎮 ${commandType} 실행 (에이전트 컨텍스트): ${command}`);
+    }
+    
+    return finalCommand;
+}
+
 start();
 
 async function portCheck(port) {
@@ -332,10 +362,22 @@ async function start() {
                     console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
                 });
 
-                // 일반 명령어 실행 처리
-                clientSocket.on("executeCommand", (command) => {
-                    console.log('💬 명령어 실행:', command);
-                    send(command);
+                // 일반 명령어 실행 처리 (주로 아이템 지급)
+                clientSocket.on("executeCommand", (data) => {
+                    const command = typeof data === 'string' ? data : data.command;
+                    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                    
+                    // @s를 실제 플레이어 이름으로 치환
+                    let processedCommand = command;
+                    if (executingPlayer && processedCommand.includes('@s')) {
+                        processedCommand = processedCommand.replace(/@s/g, `"${executingPlayer}"`);
+                    }
+                    
+                    // 통합 함수 사용
+                    const finalCommand = sendPlayerCommand(executingPlayer, processedCommand, '아이템 지급');
+                    if (finalCommand) {
+                        send(finalCommand);
+                    }
                 });
 
                 // 에이전트 명령어 처리
@@ -468,44 +510,81 @@ async function start() {
                 });
 
                 // 채팅창에 말하기 명령어 처리
-                clientSocket.on("say", (message) => {
-                    send(`tellraw @a {"rawtext":[{"text":"<"},{"selector":"@s"},{"text":"> ${message}"}]}`);
-                    console.log('💬 채팅: ' + message);
+                clientSocket.on("say", (data) => {
+                    const message = typeof data === 'string' ? data : data.message;
+                    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                    
+                    let command;
+                    if (executingPlayer) {
+                        // 플레이어 컨텍스트에서 채팅
+                        command = `tellraw @a {"rawtext":[{"text":"<${executingPlayer}> ${message}"}]}`;
+                    } else {
+                        // 에이전트 컨텍스트에서 채팅
+                        command = `tellraw @a {"rawtext":[{"text":"<"},{"selector":"@s"},{"text":"> ${message}"}]}`;
+                    }
+                    
+                    const finalCommand = sendPlayerCommand(executingPlayer, command, '채팅');
+                    if (finalCommand) {
+                        send(finalCommand);
+                    }
                 });
 
                 // 블록 설치 명령어 처리
                 clientSocket.on("setblock", (data) => {
                     const prefix = data.isFacing ? '^' : (data.isAbsolute ? '' : '~');
-                    send(`setblock ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z} ${data.blockType}`);
-                    console.log(`🏗️ 블록 설치: ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z}, 종류: ${data.blockType}`);
+                    const command = `setblock ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z} ${data.blockType}`;
+                    
+                    // 통합 함수 사용
+                    const finalCommand = sendPlayerCommand(data.executingPlayer, command, '블록 설치');
+                    if (finalCommand) {
+                        send(finalCommand);
+                    }
                 });
 
                 // 블록 채우기 명령어 처리
-                clientSocket.on("fill", (command) => {
-                    send(command);
-                    console.log('🏗️ 블록 채우기:', command);
+                clientSocket.on("fill", (data) => {
+                    const command = typeof data === 'string' ? data : data.command;
+                    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                    
+                    // 통합 함수 사용
+                    const finalCommand = sendPlayerCommand(executingPlayer, command, '블록 채우기');
+                    if (finalCommand) {
+                        send(finalCommand);
+                    }
                 });
 
                 // 블록 탐지 명령어 처리
                 clientSocket.on("blockDetect", (data) => {
-                    console.log('🔍 블록 탐지 요청:', data.command);
+                    const command = data.command;
+                    const executingPlayer = data.executingPlayer;
                     
-                    // 블록 탐지 상태 설정
-                    pendingBlockDetect = true;
-                    blockDetectResponseCount = 0;
+                    // 통합 함수로 최종 명령어 생성
+                    const finalCommand = sendPlayerCommand(executingPlayer, command, '블록 탐지');
                     
-                    // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
-                    send('gamerule sendcommandfeedback true');
-                    setTimeout(() => {
-                        send(data.command);
-                        console.log('🔍 블록 탐지 명령어 전송:', data.command);
-                    }, 50);
+                    if (finalCommand) {
+                        // 블록 탐지 상태 설정
+                        pendingBlockDetect = true;
+                        blockDetectResponseCount = 0;
+                        
+                        // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
+                        send('gamerule sendcommandfeedback true');
+                        setTimeout(() => {
+                            send(finalCommand);
+                            console.log('🔍 블록 탐지 명령어 전송:', finalCommand);
+                        }, 50);
+                    }
                 });
 
                 // 몹 소환 명령어 처리
-                clientSocket.on("summon", (command) => {
-                    send(command);
-                    console.log('👹 몹 소환:', command);
+                clientSocket.on("summon", (data) => {
+                    const command = typeof data === 'string' ? data : data.command;
+                    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                    
+                    // 통합 함수 사용
+                    const finalCommand = sendPlayerCommand(executingPlayer, command, '몹 소환');
+                    if (finalCommand) {
+                        send(finalCommand);
+                    }
                 });
             });       
 
@@ -517,7 +596,9 @@ async function start() {
                     
                     if (data.header.eventName === 'PlayerMessage') {
                         const chatMessage = data.body.message.trim();
+                        const playerName = data.body.sender || data.body.sourceName || data.body.playerName || 'Unknown';
                         console.log('\n=== 채팅 명령어 수신 ===');
+                        console.log('실행 플레이어:', playerName);
                         console.log('수신된 명령어:', chatMessage);
                         
                         // 등록된 명령어 확인
@@ -527,7 +608,11 @@ async function start() {
                             console.log('------------------------');
                             send('gamerule sendcommandfeedback false');  // 명령어 피드백 끄기
                             send('closechat');  // 채팅창 닫기
-                            commandData.socket.emit('executeCommands', commandData.blockId);
+                            // 플레이어 정보와 함께 명령어 실행
+                            commandData.socket.emit('executeCommands', { 
+                                blockId: commandData.blockId,
+                                executingPlayer: playerName
+                            });
                             setTimeout(() => {
                                 send('gamerule sendcommandfeedback true');  // 명령어 피드백 다시 켜기
                             }, 100);

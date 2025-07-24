@@ -511,7 +511,14 @@ socket.on('executeBlockBrokenCommands', async function(blockId) {
 });
 
 // 명령어 실행 이벤트 처리
-socket.on('executeCommands', async function(blockId) {
+socket.on('executeCommands', async function(data) {
+    // 이전 버전 호환성을 위해 data가 문자열인 경우 처리
+    const blockId = typeof data === 'string' ? data : data.blockId;
+    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+    
+    // 전역 변수로 현재 실행하는 플레이어 정보 저장
+    window.currentExecutingPlayer = executingPlayer;
+    
     if (isExecuting) {
         showNotification('이미 실행 중입니다.');
         return;
@@ -526,6 +533,9 @@ socket.on('executeCommands', async function(blockId) {
             isExecuting = true;
             shouldStop = false;
             console.log('\n=== 명령어 실행 시작 ===');
+            if (executingPlayer) {
+                console.log('실행 플레이어:', executingPlayer);
+            }
             console.log('블록 ID:', blockId);
             console.log('------------------------');
             showNotification('명령을 실행합니다...');

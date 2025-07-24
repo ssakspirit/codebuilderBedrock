@@ -49,7 +49,8 @@ Blockly.JavaScript['set_block'] = function(block) {
                     y: pos.y,
                     z: pos.z,
                     blockType: ${blockType},
-                    isAbsolute: pos.isAbsolute
+                    isAbsolute: pos.isAbsolute,
+                    executingPlayer: window.currentExecutingPlayer
                 });
                 setTimeout(resolve, 150);
                 console.log('블록 설치:', pos, '타입:', ${blockType});
@@ -342,7 +343,10 @@ Blockly.JavaScript['text_print'] = function(block) {
                 return;
             }
             await new Promise(resolve => {
-                socket.emit('say', ${msg});
+                socket.emit('say', {
+                    message: ${msg},
+                    executingPlayer: window.currentExecutingPlayer
+                });
                 setTimeout(resolve, 150);
             });
         })();
@@ -419,7 +423,10 @@ Blockly.JavaScript['fill_blocks'] = function(block) {
                 const startPrefix = start.isFacing ? '^' : (start.isAbsolute ? '' : '~');
                 const endPrefix = end.isFacing ? '^' : (end.isAbsolute ? '' : '~');
                 const command = \`fill \${startPrefix}\${start.x} \${startPrefix}\${start.y} \${startPrefix}\${start.z} \${endPrefix}\${end.x} \${endPrefix}\${end.y} \${endPrefix}\${end.z} \${${blockType}} ${fillMode}\`;
-                socket.emit("fill", command);
+                socket.emit("fill", {
+                    command: command,
+                    executingPlayer: window.currentExecutingPlayer
+                });
                 setTimeout(resolve, 150);
                 console.log('블록 채우기:', command);
             });
@@ -509,7 +516,10 @@ Blockly.JavaScript['mob_summon'] = function(block) {
             const pos = JSON.parse(${position});
             const prefix = pos.isFacing ? '^' : (pos.isAbsolute ? '' : '~');
             const command = \`summon \${${mobType}} \${prefix}\${pos.x} \${prefix}\${pos.y} \${prefix}\${pos.z}\`;
-            socket.emit("summon", command);
+            socket.emit("summon", {
+                command: command,
+                executingPlayer: window.currentExecutingPlayer
+            });
             setTimeout(resolve, 150);
             console.log('몹 소환:', command);
         });
