@@ -732,9 +732,11 @@ class FieldSearchableDropdown extends Blockly.FieldDropdown {
  */
 Blockly.Blocks['block_type'] = {
     init: function() {
+        const dropdown = new FieldSearchableDropdown(MINECRAFT_BLOCKS);
+        dropdown.setValue("grass_block"); // 기본값을 잔디블록으로 설정
         this.appendDummyInput()
             .appendField("블록:")
-            .appendField(new FieldSearchableDropdown(MINECRAFT_BLOCKS), "BLOCK_TYPE");
+            .appendField(dropdown, "BLOCK_TYPE");
         this.setOutput(true, ["String", "BlockType"]);
         this.setColour('#7ABB55');
         this.setTooltip("설치할 블록의 종류를 선택합니다 (검색 가능)");
