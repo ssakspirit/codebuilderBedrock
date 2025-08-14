@@ -1729,11 +1729,12 @@ async function start() {
                     
                     // 좌표 정리
                     let sx, sy, sz, ex, ey, ez;
-                    let prefix = '';
+                    let useRelativeCoords = false;
                     
-                    // 상대/절대 좌표 처리
-                    if (startPos.isAbsolute === false || startPos.isFacing || startPos.isLocal) {
-                        prefix = '~';
+                    // 상대/절대 좌표 여부 확인 (시작점이나 끝점 중 하나라도 상대좌표면 상대좌표 사용)
+                    if (startPos.isAbsolute === false || startPos.isFacing || startPos.isLocal ||
+                        endPos.isAbsolute === false || endPos.isFacing || endPos.isLocal) {
+                        useRelativeCoords = true;
                     }
                     
                     // 시작점 좌표 처리
@@ -1782,6 +1783,7 @@ async function start() {
                     
                     // 각 점에 블록 설치
                     for (const point of linePoints) {
+                        const prefix = useRelativeCoords ? '~' : '';
                         const setBlockCommand = `setblock ${prefix}${point.x} ${prefix}${point.y} ${prefix}${point.z} ${cleanBlockType}`;
                         console.log(`🟩 블록 설치: ${setBlockCommand}`);
                         
