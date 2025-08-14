@@ -607,10 +607,7 @@ async function start() {
                             console.log('✅ 명령어 실행 시작');
                             console.log('------------------------');
                             send('gamerule sendcommandfeedback false');  // 명령어 피드백 끄기
-                            
-                            // 채팅창 닫기 - Code Connection 명령어
-                            send('closechat');  // 웹소켓 연결된 클라이언트(호스트)에게 채팅창 닫기
-                            
+                            send('closechat');  // 채팅창 닫기
                             // 플레이어 정보와 함께 명령어 실행
                             commandData.socket.emit('executeCommands', { 
                                 blockId: commandData.blockId,
