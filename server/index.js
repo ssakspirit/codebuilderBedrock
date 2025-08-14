@@ -488,20 +488,87 @@ async function start() {
                     });
                 });
 
-                clientSocket.on("tpPos", (data) => {
+                clientSocket.on("tpPos", async (data) => {
+                    console.log('🔍 에이전트 텔레포트 데이터 디버깅:');
+                    console.log('   data:', JSON.stringify(data, null, 2));
+                    
+                    let finalX = data.x;
+                    let finalY = data.y;
+                    let finalZ = data.z;
+                    let facingX = 0;
+                    let facingY = 0;
+                    let facingZ = 0;
+                    
+                    // 위치 좌표 카메라 처리
+                    if (data.isCamera) {
+                        console.log('   → 위치 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
+                        
+                        try {
+                            const playerDirection = await new Promise((resolve) => {
+                                const queryCommand = `querytarget "${data.executingPlayer}"`;
+                                console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                
+                                const responseHandler = (message) => {
+                                    try {
+                                        const messageStr = message.toString();
+                                        console.log('📍 방향 조회 응답:', messageStr);
+                                        
+                                        const jsonData = JSON.parse(messageStr);
+                                        if (jsonData.body && jsonData.body.details) {
+                                            const details = JSON.parse(jsonData.body.details);
+                                            if (details && details[0] && details[0].yRot !== undefined) {
+                                                const yaw = parseFloat(details[0].yRot);
+                                                console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                socket.off('message', responseHandler);
+                                                resolve(yaw);
+                                                return;
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                    }
+                                };
+                                
+                                socket.on('message', responseHandler);
+                                
+                                setTimeout(() => {
+                                    socket.off('message', responseHandler);
+                                    console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                    resolve(0);
+                                }, 1000);
+                                
+                                send(queryCommand);
+                            });
+                            
+                            const convertedCoords = convertCameraPosition(data.x, data.y, data.z, playerDirection);
+                            console.log('🎯 위치 카메라 좌표 변환:', convertedCoords);
+                            
+                            finalX = convertedCoords.x;
+                            finalY = convertedCoords.y;
+                            finalZ = convertedCoords.z;
+                            
+                        } catch (error) {
+                            console.error('❌ 위치 카메라 위치 처리 오류:', error);
+                        }
+                    }
+                    
                     // 방향에 따른 facing 좌표 설정
-                    let facingCoord;
                     switch(data.facing) {
-                        case 'north': facingCoord = '~ ~ ~-1'; break;
-                        case 'south': facingCoord = '~ ~ ~1'; break;
-                        case 'east': facingCoord = '~1 ~ ~'; break;
-                        case 'west': facingCoord = '~-1 ~ ~'; break;
+                        case 'north': facingX = 0; facingY = 0; facingZ = -1; break;
+                        case 'south': facingX = 0; facingY = 0; facingZ = 1; break;
+                        case 'east': facingX = 1; facingY = 0; facingZ = 0; break;
+                        case 'west': facingX = -1; facingY = 0; facingZ = 0; break;
                     }
                     
                     // 절대좌표인 경우 ~ 기호를 제거
-                    const tilde = data.isAbsolute ? '' : '~';
-                    send(`agent tp ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z} facing ${facingCoord}`);
-                    console.log(`🎯 ${data.isAbsolute ? '절대' : '상대'}좌표 이동: ${tilde}${data.x} ${tilde}${data.y} ${tilde}${data.z}, 방향: ${data.facing}`);
+                    const tilde = (data.isAbsolute && !data.isCamera) ? '' : '~';
+                    const facingCoord = `~${facingX} ~${facingY} ~${facingZ}`;
+                    
+                    const tpCommand = `agent tp ${tilde}${finalX} ${tilde}${finalY} ${tilde}${finalZ} facing ${facingCoord}`;
+                    console.log('🤖 에이전트 텔레포트 명령어:', tpCommand);
+                    
+                    send(tpCommand);
+                    console.log(`🎯 에이전트 이동: ${tilde}${finalX} ${tilde}${finalY} ${tilde}${finalZ}, 방향: ${data.facing}`);
                 });
 
                 clientSocket.on("till", (direction) => {

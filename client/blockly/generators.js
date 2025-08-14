@@ -235,7 +235,11 @@ Blockly.JavaScript['agent_tp_pos'] = function(block) {
             y: pos.y, 
             z: pos.z, 
             facing: "${facing}",
-            isAbsolute: pos.isAbsolute
+            isAbsolute: pos.isAbsolute,
+            isCamera: pos.isCamera || false,
+            isLocal: pos.isLocal || false,
+            isFacing: pos.isFacing || false,
+            executingPlayer: window.currentExecutingPlayer
         });
         setTimeout(resolve, 150);
     });\n`;
