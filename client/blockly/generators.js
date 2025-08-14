@@ -551,14 +551,13 @@ Blockly.JavaScript['mob_summon'] = function(block) {
         }
         await new Promise(resolve => {
             const pos = JSON.parse(${position});
-            const prefix = pos.isFacing ? '^' : (pos.isAbsolute ? '' : '~');
-            const command = \`summon \${${mobType}} \${prefix}\${pos.x} \${prefix}\${pos.y} \${prefix}\${pos.z}\`;
             socket.emit("summon", {
-                command: command,
+                mobType: ${mobType},
+                position: pos,
                 executingPlayer: window.currentExecutingPlayer
             });
             setTimeout(resolve, 150);
-            console.log('몹 소환:', command);
+            console.log('몹 소환 - 타입:', ${mobType}, '위치:', pos);
         });
     })();\n`;
 }; 
