@@ -12,6 +12,7 @@
  */
 const MINECRAFT_BLOCKS = [
     // 기본 블록
+    ["공기", "air"],
     ["돌", "stone"],
     ["화강암", "granite"],
     ["연마된 화강암", "polished_granite"],
