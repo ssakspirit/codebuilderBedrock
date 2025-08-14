@@ -552,6 +552,18 @@ async function start() {
                         }
                     }
                     
+                    // 바라보는 방향 위치 처리 (isFacing 또는 isLocal)
+                    if (data.isFacing || data.isLocal) {
+                        console.log('   → 바라보는 방향 위치 처리 중...');
+                        console.log('🔍 바라보는 방향 위치 좌표:', { x: data.x, y: data.y, z: data.z });
+                        console.log('   → 바라보는 방향 위치는 ^ 좌표로 처리됩니다');
+                        
+                        // 바라보는 방향 위치는 그대로 ^ 좌표로 전달 (서버 처리 없음)
+                        finalX = data.x;
+                        finalY = data.y;
+                        finalZ = data.z;
+                    }
+                    
                     // 방향에 따른 facing 좌표 설정
                     switch(data.facing) {
                         case 'north': facingX = 0; facingY = 0; facingZ = -1; break;
