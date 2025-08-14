@@ -12,7 +12,8 @@
       "Edit(.commit_message.txt)",
       "Bash(git revert:*)",
       "Bash(git commit:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

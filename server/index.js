@@ -82,12 +82,12 @@ async function portCheck(port) {
 
 async function start() {
     // 사용할 포트 범위 지정
-    const wsPort = await findAvailablePort(3000, 3010);
+    const wsPort = await findAvailablePort(3000, 3050);
     if (!wsPort) {
         console.log('사용 가능한 WebSocket 포트를 찾을 수 없습니다.');
         process.exit(1);
     }
-    const expressPort = await findAvailablePort(4000, 4010);
+    const expressPort = await findAvailablePort(4000, 4050);
     if (!expressPort) {
         console.log('사용 가능한 Express 포트를 찾을 수 없습니다.');
         process.exit(1);
@@ -1069,6 +1069,92 @@ async function start() {
                     }
                     
                     console.log('✅ 반구 모양 생성 완료');
+                });
+
+                // 플레이어 위치 조회 처리
+                clientSocket.on("getPlayerPosition", async (data) => {
+                    const playerName = data.player || 'Unknown';
+                    
+                    console.log('📍 플레이어 위치 조회 요청 수신');
+                    console.log('  대상 플레이어:', playerName);
+                    
+                    if (playerName === 'Unknown') {
+                        console.log('❌ 플레이어 정보가 없어 위치 조회 불가');
+                        clientSocket.emit('playerPositionResult', { x: 0, y: 0, z: 0 });
+                        return;
+                    }
+                    
+                    try {
+                        // querytarget 명령으로 플레이어 위치 조회
+                        const command = `querytarget "${playerName}"`;
+                        console.log('🔍 실행할 명령어:', command);
+                        
+                        // 결과를 받기 위한 임시 변수
+                        let positionReceived = false;
+                        
+                        // 응답 리스너 설정 (임시)
+                        const responseHandler = (message) => {
+                            if (positionReceived) return;
+                            
+                            try {
+                                const messageStr = message.toString();
+                                console.log('📍 수신된 응답:', messageStr);
+                                
+                                // querytarget 응답에서 좌표 추출
+                                // JSON 형식에서 position 데이터 추출
+                                let posMatch = null;
+                                
+                                try {
+                                    // JSON 응답인 경우
+                                    const jsonData = JSON.parse(messageStr);
+                                    if (jsonData.body && jsonData.body.details) {
+                                        const details = JSON.parse(jsonData.body.details);
+                                        if (details && details[0] && details[0].position) {
+                                            const pos = details[0].position;
+                                            posMatch = [null, pos.x, pos.y, pos.z];
+                                        }
+                                    }
+                                } catch (e) {
+                                    // JSON 파싱 실패 시 기존 정규식 사용
+                                    posMatch = messageStr.match(/at\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
+                                }
+                                
+                                if (posMatch) {
+                                    const x = Math.floor(parseFloat(posMatch[1]));
+                                    const y = Math.floor(parseFloat(posMatch[2])) - 1; // 다리 위치로 조정
+                                    const z = Math.floor(parseFloat(posMatch[3]));
+                                    
+                                    console.log('✅ 플레이어 위치 파싱 성공:', { x, y, z });
+                                    clientSocket.emit('playerPositionResult', { x, y, z });
+                                    positionReceived = true;
+                                    
+                                    // 리스너 제거
+                                    socket.off('message', responseHandler);
+                                }
+                            } catch (error) {
+                                console.error('❌ 위치 정보 파싱 오류:', error);
+                            }
+                        };
+                        
+                        // 임시 리스너 등록
+                        socket.on('message', responseHandler);
+                        
+                        // 명령어 전송
+                        send(command);
+                        
+                        // 3초 후 타임아웃
+                        setTimeout(() => {
+                            if (!positionReceived) {
+                                console.log('⏰ 플레이어 위치 조회 타임아웃');
+                                clientSocket.emit('playerPositionResult', { x: 0, y: 0, z: 0 });
+                                socket.off('message', responseHandler);
+                            }
+                        }, 3000);
+                        
+                    } catch (error) {
+                        console.error('❌ 플레이어 위치 조회 실패:', error);
+                        clientSocket.emit('playerPositionResult', { x: 0, y: 0, z: 0 });
+                    }
                 });
 
                 // 몹 소환 명령어 처리

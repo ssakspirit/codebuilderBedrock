@@ -42,16 +42,30 @@ Blockly.JavaScript['set_block'] = function(block) {
                 console.log('실행이 중단되었습니다.');
                 return;
             }
+            // 위치 정보를 먼저 해결
+            const positionData = ${position};
+            const pos = JSON.parse(positionData);
+            
             await new Promise(resolve => {
-                const pos = JSON.parse(${position});
-                socket.emit("setblock", {
-                    x: pos.x,
-                    y: pos.y,
-                    z: pos.z,
-                    blockType: ${blockType},
-                    isAbsolute: pos.isAbsolute,
-                    executingPlayer: window.currentExecutingPlayer
-                });
+                console.log('🔨 setblock 이벤트 전송 준비');
+                console.log('  위치:', pos);
+                console.log('  블록 타입:', ${blockType});
+                console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
+                
+                if (socket && socket.connected) {
+                    socket.emit("setblock", {
+                        x: pos.x,
+                        y: pos.y,
+                        z: pos.z,
+                        blockType: ${blockType},
+                        isAbsolute: pos.isAbsolute,
+                        executingPlayer: window.currentExecutingPlayer
+                    });
+                    console.log('✅ setblock 이벤트 전송 완료');
+                } else {
+                    console.error('❌ 소켓이 연결되지 않아 setblock 전송 실패');
+                }
+                
                 setTimeout(resolve, 150);
                 console.log('블록 설치:', pos, '타입:', ${blockType});
             });
@@ -544,30 +558,68 @@ Blockly.JavaScript['create_circle'] = function(block) {
     return `
     (async () => {
         const executingPlayer = window.currentExecutingPlayer || 'Unknown';
-        const centerPos = JSON.parse(${center});
+        const centerData = ${center};
+        const centerPos = JSON.parse(centerData);
         const r = ${radius};
         const blockType = ${blockType};
         
         console.log('🔴 원 모양 생성 요청');
-        console.log('  중심:', centerPos);
+        console.log('  원본 중심:', centerPos);
         console.log('  반지름:', r);
         console.log('  방향:', '${direction}');
         console.log('  모드:', '${mode}');
         console.log('  블록 타입:', blockType);
         console.log('  실행 플레이어:', executingPlayer);
+        
+        // 상대좌표인 경우 클라이언트에서 미리 절대좌표로 변환
+        let finalCenter = centerPos;
+        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+            console.log('📍 상대좌표 감지 - 클라이언트에서 위치 조회 중...');
+            
+            // 플레이어 위치 조회 (player_position 블록과 동일한 로직)
+            const playerPosition = await new Promise(resolve => {
+                const resultListener = (result) => {
+                    socket.off('playerPositionResult', resultListener);
+                    resolve(result);
+                };
+                socket.on('playerPositionResult', resultListener);
+                
+                socket.emit("getPlayerPosition", { player: executingPlayer });
+                
+                setTimeout(() => {
+                    socket.off('playerPositionResult', resultListener);
+                    console.log('⏰ 플레이어 위치 조회 타임아웃 - 기본값 사용');
+                    resolve({ x: 0, y: 0, z: 0 });
+                }, 3000);
+            });
+            
+            // 절대좌표로 변환
+            finalCenter = {
+                x: playerPosition.x + centerPos.x,
+                y: playerPosition.y + centerPos.y,
+                z: playerPosition.z + centerPos.z,
+                isAbsolute: true
+            };
+            
+            console.log('🎯 클라이언트에서 좌표 변환 완료:');
+            console.log('  플레이어 위치:', playerPosition);
+            console.log('  상대 오프셋:', centerPos);
+            console.log('  최종 중심:', finalCenter);
+        }
+        
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
-        // 서버로 원 생성 요청 전송
+        // 서버로 원 생성 요청 전송 (절대좌표)
         if (socket && socket.connected) {
             socket.emit("createCircle", {
-                center: centerPos,
+                center: finalCenter,
                 radius: r,
                 direction: '${direction}',
                 mode: '${mode}',
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 원 모양 생성 요청 전송 완료');
+            console.log('✅ 원 모양 생성 요청 전송 완료 (최적화됨)');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
@@ -584,28 +636,61 @@ Blockly.JavaScript['create_sphere'] = function(block) {
     return `
     (async () => {
         const executingPlayer = window.currentExecutingPlayer || 'Unknown';
-        const centerPos = JSON.parse(${center});
+        const centerData = ${center};
+        const centerPos = JSON.parse(centerData);
         const r = ${radius};
         const blockType = ${blockType};
         
         console.log('⚪ 공 모양 생성 요청');
-        console.log('  중심:', centerPos);
+        console.log('  원본 중심:', centerPos);
         console.log('  반지름:', r);
         console.log('  모드:', '${mode}');
         console.log('  블록 타입:', blockType);
         console.log('  실행 플레이어:', executingPlayer);
+        
+        // 상대좌표인 경우 클라이언트에서 미리 절대좌표로 변환
+        let finalCenter = centerPos;
+        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+            console.log('📍 상대좌표 감지 - 클라이언트에서 위치 조회 중...');
+            
+            const playerPosition = await new Promise(resolve => {
+                const resultListener = (result) => {
+                    socket.off('playerPositionResult', resultListener);
+                    resolve(result);
+                };
+                socket.on('playerPositionResult', resultListener);
+                
+                socket.emit("getPlayerPosition", { player: executingPlayer });
+                
+                setTimeout(() => {
+                    socket.off('playerPositionResult', resultListener);
+                    console.log('⏰ 플레이어 위치 조회 타임아웃 - 기본값 사용');
+                    resolve({ x: 0, y: 0, z: 0 });
+                }, 3000);
+            });
+            
+            finalCenter = {
+                x: playerPosition.x + centerPos.x,
+                y: playerPosition.y + centerPos.y,
+                z: playerPosition.z + centerPos.z,
+                isAbsolute: true
+            };
+            
+            console.log('🎯 클라이언트에서 좌표 변환 완료 (구)');
+        }
+        
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
         // 서버로 구 생성 요청 전송
         if (socket && socket.connected) {
             socket.emit("createSphere", {
-                center: centerPos,
+                center: finalCenter,
                 radius: r,
                 mode: '${mode}',
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 공 모양 생성 요청 전송 완료');
+            console.log('✅ 공 모양 생성 요청 전송 완료 (최적화됨)');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
@@ -626,8 +711,9 @@ Blockly.JavaScript['create_hemisphere'] = function(block) {
         const centerPos = JSON.parse(${center});
         const r = ${radius};
         const blockType = ${blockType};
+        let finalCenter = centerPos;
         
-        console.log('🌗 반구 모양 생성 요청');
+        console.log('🌗 반구 모양 생성 요청 (최적화됨)');
         console.log('  중심:', centerPos);
         console.log('  반지름:', r);
         console.log('  축:', '${axis}');
@@ -636,19 +722,93 @@ Blockly.JavaScript['create_hemisphere'] = function(block) {
         console.log('  실행 플레이어:', executingPlayer);
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
+        // 클라이언트에서 상대좌표 변환 (서버 지연 제거)
+        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+            console.log('📍 클라이언트에서 상대좌표 변환 중...');
+            const playerPosition = await new Promise(resolve => {
+                const resultListener = (result) => {
+                    socket.off('playerPositionResult', resultListener);
+                    resolve(result);
+                };
+                socket.on('playerPositionResult', resultListener);
+                socket.emit("getPlayerPosition", { player: executingPlayer });
+            });
+            
+            finalCenter = {
+                x: playerPosition.x + centerPos.x,
+                y: playerPosition.y + centerPos.y,
+                z: playerPosition.z + centerPos.z,
+                isAbsolute: true
+            };
+            console.log('📍 변환된 절대 좌표:', finalCenter);
+        }
+        
         // 서버로 반구 생성 요청 전송
         if (socket && socket.connected) {
             socket.emit("createHemisphere", {
-                center: centerPos,
+                center: finalCenter,
                 radius: r,
                 axis: '${axis}',
                 mode: '${mode}',
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 반구 모양 생성 요청 전송 완료');
+            console.log('✅ 반구 모양 생성 요청 전송 완료 (최적화됨)');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
     })();\n`;
 };
+// 플레이어 현재 위치 코드 생성기
+Blockly.JavaScript['player_position'] = function(block) {
+    const code = `(await (async () => {
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
+        
+        console.log('📍 플레이어 위치 조회 요청');
+        console.log('  대상 플레이어:', executingPlayer);
+        console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
+        
+        return new Promise(resolve => {
+            // 서버에서 플레이어 위치 결과를 받는 리스너 설정
+            const resultListener = (result) => {
+                console.log('📍 플레이어 위치 결과 수신:', result);
+                socket.off('playerPositionResult', resultListener);
+                
+                // 절대좌표 형식으로 반환
+                const positionData = {
+                    x: result.x || 0,
+                    y: result.y || 0, 
+                    z: result.z || 0,
+                    isAbsolute: true
+                };
+                
+                console.log('📍 반환할 위치 데이터:', positionData);
+                resolve(JSON.stringify(positionData));
+            };
+            socket.on('playerPositionResult', resultListener);
+            
+            // 플레이어 위치 조회 요청
+            if (socket && socket.connected) {
+                socket.emit("getPlayerPosition", {
+                    player: executingPlayer
+                });
+                console.log('✅ 플레이어 위치 조회 요청 전송 완료');
+            } else {
+                console.error('❌ 소켓 연결이 되어있지 않음');
+                resolve(JSON.stringify({x: 0, y: 0, z: 0, isAbsolute: true}));
+            }
+            
+            // 타임아웃 설정 (3초 후 기본값 반환)
+            setTimeout(() => {
+                console.log('📍 플레이어 위치 조회 타임아웃');
+                socket.off('playerPositionResult', resultListener);
+                resolve(JSON.stringify({x: 0, y: 0, z: 0, isAbsolute: true}));
+            }, 3000);
+        });
+    })())`;
+    
+    return [code, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원  
+Blockly.JavaScript.forBlock['player_position'] = Blockly.JavaScript['player_position'];

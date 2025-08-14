@@ -1451,6 +1451,18 @@ Blockly.Blocks['create_hemisphere'] = {
     }
 };
 
+// 플레이어 현재 위치 블록 정의
+Blockly.Blocks['player_position'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("플레이어 현재 위치");
+        this.setOutput(true, 'Position');
+        this.setColour('#60A5FA');
+        this.setTooltip('플레이어의 현재 위치를 절대좌표로 반환합니다');
+        this.setHelpUrl('');
+    }
+};
+
 // 변수 블록 초기화 그림자 블록 추가
 const originalVariableInit = Blockly.Blocks['variables_set'].init;
 Blockly.Blocks['variables_set'].init = function() {

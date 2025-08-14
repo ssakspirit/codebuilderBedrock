@@ -582,23 +582,44 @@ socket.on('executeCommands', async function(data) {
         console.log('❌ 명령어 블록을 찾을 수 없음');
         showNotification('해당 명령어 블록을 찾을 수 없습니다.');
     }
-}
+});
 
 // 파일 저장 기능
 function saveWorkspace() {
     try {
+        // 현재 워크스페이스의 블록 확인
+        const topBlocks = workspace.getTopBlocks(true);
+        console.log('💾 저장할 블록 수:', topBlocks.length);
+        console.log('📦 저장할 블록 타입들:', topBlocks.map(b => b.type));
+        
+        if (topBlocks.length === 0) {
+            showNotification('저장할 블록이 없습니다.');
+            return;
+        }
+        
         // 현재 워크스페이스를 XML로 변환
         const xml = Blockly.Xml.workspaceToDom(workspace);
         const xmlText = Blockly.Xml.domToPrettyText(xml);
         
-        // 현재 날짜/시간으로 파일 이름 생성
+        console.log('📄 생성된 XML 미리보기:', xmlText.substring(0, 200) + '...');
+        
+        // 사용자에게 파일 이름 입력 받기
         const now = new Date();
         const timestamp = now.getFullYear() + 
             String(now.getMonth() + 1).padStart(2, '0') + 
             String(now.getDate()).padStart(2, '0') + '_' +
             String(now.getHours()).padStart(2, '0') + 
             String(now.getMinutes()).padStart(2, '0');
-        const filename = `마인크래프트_블록_${timestamp}.xml`;
+        const defaultName = `마인크래프트_블록_${timestamp}`;
+        
+        const userFileName = prompt('파일 이름을 입력하세요:', defaultName);
+        if (!userFileName) {
+            showNotification('저장이 취소되었습니다.');
+            return;
+        }
+        
+        // .xml 확장자 자동 추가 (없을 경우)
+        const filename = userFileName.endsWith('.xml') ? userFileName : `${userFileName}.xml`;
         
         // 파일 다운로드
         const blob = new Blob([xmlText], { type: 'application/xml' });
@@ -612,7 +633,7 @@ function saveWorkspace() {
         URL.revokeObjectURL(url);
         
         console.log('✅ 파일 저장 완료:', filename);
-        showNotification('파일이 저장되었습니다: ' + filename);
+        showNotification(`파일이 저장되었습니다: ${filename} (${topBlocks.length}개 블록)`);
     } catch (error) {
         console.error('❌ 파일 저장 실패:', error);
         showNotification('파일 저장에 실패했습니다: ' + error.message);
@@ -636,16 +657,38 @@ function loadWorkspace() {
             reader.onload = function(e) {
                 try {
                     const xmlText = e.target.result;
-                    const xml = Blockly.Xml.textToDom(xmlText);
+                    console.log('📄 파일 내용 미리보기:', xmlText.substring(0, 200) + '...');
                     
                     // 기존 워크스페이스 내용 지우기
                     workspace.clear();
+                    console.log('🧹 워크스페이스 초기화 완료');
                     
-                    // 새로운 블록들 로드
-                    Blockly.Xml.domToWorkspace(xml, workspace);
+                    // DOMParser를 사용한 XML 파싱
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    // 파싱 오류 확인
+                    const parseError = xmlDoc.querySelector('parsererror');
+                    if (parseError) {
+                        throw new Error('XML 파싱 오류: ' + parseError.textContent);
+                    }
+                    
+                    console.log('📋 XML 파싱 완료');
+                    
+                    // 블록들 로드
+                    Blockly.Xml.domToWorkspace(xmlDoc.documentElement, workspace);
+                    
+                    // 로드된 블록 수 확인
+                    const loadedBlocks = workspace.getTopBlocks(true);
+                    console.log('🔢 로드된 블록 수:', loadedBlocks.length);
+                    console.log('📦 로드된 블록 타입들:', loadedBlocks.map(b => b.type));
+                    
+                    // 워크스페이스 렌더링 강제 새로고침
+                    workspace.render();
                     
                     console.log('✅ 파일 불러오기 완료:', file.name);
-                    showNotification('파일을 불러왔습니다: ' + file.name);
+                    showNotification(`파일을 불러왔습니다: ${file.name} (${loadedBlocks.length}개 블록)`);
+                    
                 } catch (error) {
                     console.error('❌ 파일 불러오기 실패:', error);
                     showNotification('파일 불러오기에 실패했습니다: ' + error.message);
