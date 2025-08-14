@@ -529,8 +529,89 @@ async function start() {
                     }
                 });
 
+                // 카메라 위치 좌표 변환 함수 (posCamera 구현)
+                function convertCameraPosition(x, y, z, yaw) {
+                    // 마인크래프트 yaw를 0-360도로 정규화
+                    let normalizedYaw = ((yaw % 360) + 360) % 360;
+                    
+                    // 8방향으로 분류 (각 45도씩)
+                    // 0도 = 남쪽, 90도 = 서쪽, 180도 = 북쪽, 270도 = 동쪽
+                    let worldX = 0;
+                    let worldY = y; // 위/아래는 그대로  
+                    let worldZ = 0;
+                    
+                    // Z축 (앞/뒤) 변환 - 플레이어 방향에 따라 월드 X, Z축으로 분산
+                    if (normalizedYaw >= 337.5 || normalizedYaw < 22.5) {
+                        // 남쪽 (0도) - Z+ 방향
+                        worldZ = z;
+                    } else if (normalizedYaw >= 22.5 && normalizedYaw < 67.5) {
+                        // 남서쪽 - 서쪽에 더 가까우면 서쪽 우선
+                        if (normalizedYaw > 45) {
+                            worldX = -z; // 서쪽 우선
+                        } else {
+                            worldZ = z;  // 남쪽 우선
+                        }
+                    } else if (normalizedYaw >= 67.5 && normalizedYaw < 112.5) {
+                        // 서쪽 (90도) - X- 방향
+                        worldX = -z;
+                    } else if (normalizedYaw >= 112.5 && normalizedYaw < 157.5) {
+                        // 북서쪽 - 북쪽에 더 가까우면 북쪽 우선
+                        if (normalizedYaw > 135) {
+                            worldZ = -z; // 북쪽 우선
+                        } else {
+                            worldX = -z; // 서쪽 우선
+                        }
+                    } else if (normalizedYaw >= 157.5 && normalizedYaw < 202.5) {
+                        // 북쪽 (180도) - Z- 방향
+                        worldZ = -z;
+                    } else if (normalizedYaw >= 202.5 && normalizedYaw < 247.5) {
+                        // 북동쪽 - 동쪽에 더 가까우면 동쪽 우선
+                        if (normalizedYaw > 225) {
+                            worldX = z;  // 동쪽 우선
+                        } else {
+                            worldZ = -z; // 북쪽 우선
+                        }
+                    } else if (normalizedYaw >= 247.5 && normalizedYaw < 292.5) {
+                        // 동쪽 (270도) - X+ 방향
+                        worldX = z;
+                    } else if (normalizedYaw >= 292.5 && normalizedYaw < 337.5) {
+                        // 남동쪽 - 남쪽에 더 가까우면 남쪽 우선
+                        if (normalizedYaw > 315) {
+                            worldZ = z;  // 남쪽 우선
+                        } else {
+                            worldX = z;  // 동쪽 우선
+                        }
+                    }
+                    
+                    // X축 (오른쪽/왼쪽) 변환 - 플레이어 방향에 따라 회전
+                    if (normalizedYaw >= 337.5 || normalizedYaw < 22.5) {
+                        // 남쪽: 오른쪽이 서쪽(-X)
+                        worldX += -x;
+                    } else if (normalizedYaw >= 67.5 && normalizedYaw < 112.5) {
+                        // 서쪽: 오른쪽이 남쪽(+Z)
+                        worldZ += -x;
+                    } else if (normalizedYaw >= 157.5 && normalizedYaw < 202.5) {
+                        // 북쪽: 오른쪽이 동쪽(+X)
+                        worldX += x;
+                    } else if (normalizedYaw >= 247.5 && normalizedYaw < 292.5) {
+                        // 동쪽: 오른쪽이 북쪽(-Z)
+                        worldZ += x;
+                    } else {
+                        // 대각선 방향들은 가장 가까운 축으로
+                        worldX += (normalizedYaw > 180) ? x : -x;
+                    }
+                    
+                    console.log(`🧭 방향 변환: yaw=${normalizedYaw}° (${x},${y},${z}) → (${worldX},${worldY},${worldZ})`);
+                    
+                    return {
+                        x: Math.round(worldX),
+                        y: Math.round(worldY),
+                        z: Math.round(worldZ)
+                    };
+                }
+
                 // 블록 설치 명령어 처리
-                clientSocket.on("setblock", (data) => {
+                clientSocket.on("setblock", async (data) => {
                     console.log('🔍 블록 설치 데이터 디버깅:');
                     console.log('   data:', JSON.stringify(data, null, 2));
                     console.log('   isLocal:', data.isLocal);
