@@ -8,8 +8,22 @@
       "Bash(git push:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gist.github.com)",
-      "WebFetch(domain:bedrockpy.readthedocs.io)"
+      "WebFetch(domain:bedrockpy.readthedocs.io)",
+      "Edit(.commit_message.txt)"
     ],
     "deny": []
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$p = Join-Path $env:CLAUDE_PROJECT_DIR '.claude/hooks/auto-commit.ps1'; & $p\""
+          }
+        ]
+      }
+    ]
   }
 }

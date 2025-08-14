@@ -298,9 +298,16 @@ Blockly.JavaScript['give_item'] = function(block) {
             }
             await new Promise(resolve => {
                 const command = \`give \${${target}} \${${item}} \${${count}}\`;
-                socket.emit("executeCommand", command);
+                const commandData = {
+                    command: command,
+                    executingPlayer: window.currentExecutingPlayer
+                };
+                socket.emit("executeCommand", commandData);
                 setTimeout(resolve, 150);
                 console.log('아이템 지급 명령어:', command);
+                if (window.currentExecutingPlayer) {
+                    console.log('실행 플레이어:', window.currentExecutingPlayer);
+                }
             });
         })();
     `;

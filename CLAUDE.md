@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Version Control
+* Whenever code changes are made, you must record a one-line description with emoji in korean of the change in `.commit_message.txt` with Edit Tool.
+   - Read `.commit_message.txt` first, and then Edit.
+   - Overwrite regardless of existing content.
+   - If it was a git revert related operation, make the .commit_message.txt file empty.
+
 ## Project Overview
 
 This is a Minecraft Bedrock Edition agent control system that uses visual block programming (Blockly) to control in-game agents. The system consists of a Node.js WebSocket server that communicates with Minecraft via the Code Connection interface and a web-based Blockly editor for creating agent commands.
