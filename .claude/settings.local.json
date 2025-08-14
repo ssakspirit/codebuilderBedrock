@@ -9,9 +9,12 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gist.github.com)",
       "WebFetch(domain:bedrockpy.readthedocs.io)",
-      "Edit(.commit_message.txt)"
+      "Edit(.commit_message.txt)",
+      "Bash(git revert:*)",
+      "Bash(git commit:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   },
   "hooks": {
     "Stop": [

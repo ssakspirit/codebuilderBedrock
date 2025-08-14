@@ -461,6 +461,37 @@
             <block type="logic_ternary"></block>
         </category>
         <category name="변수" colour="#a41e16" custom="VARIABLE"></category>
+        <category name="모양" colour="#ec7505">
+            <block type="create_circle">
+                <value name="BLOCK_TYPE">
+                    <shadow type="block_type"></shadow>
+                </value>
+                <value name="CENTER">
+                    <shadow type="coordinate_pos">
+                        <value name="X">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="Y">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="Z">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                    </shadow>
+                </value>
+                <value name="RADIUS">
+                    <shadow type="math_number">
+                        <field name="NUM">5</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
     </xml>
 
     <!-- 내부 스크립트 파일들 (순서 중요) -->
