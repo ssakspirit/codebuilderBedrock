@@ -1411,6 +1411,7 @@ Blockly.Blocks['create_sphere'] = {
         this.setNextStatement(true, null);
         this.setColour('#ec7505');
         this.setTooltip("지정된 중심점과 반지름으로 3D 구를 만듭니다");
+        this.setInputsInline(false); // 세로로 정렬
     }
 };
 
