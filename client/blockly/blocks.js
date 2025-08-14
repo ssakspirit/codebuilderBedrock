@@ -814,7 +814,7 @@ Blockly.Blocks['facing_pos'] = {
     }
 };
 
-// 카메라 상대 위치 블록 정의
+// 카메라 상대 위치 블록 정의 (posCamera - 월드 축 기반)
 Blockly.Blocks['camera_pos'] = {
     init: function() {
         this.appendValueInput("X")
@@ -829,7 +829,26 @@ Blockly.Blocks['camera_pos'] = {
         this.setInputsInline(true);
         this.setOutput(true, "Position");
         this.setColour('#69b090');
-        this.setTooltip("플레이어가 바라보는 방향을 기준으로 한 상대 좌표입니다. 오른쪽(+)/왼쪽(-), 위(+)/아래(-), 앞(+)/뒤(-)");
+        this.setTooltip("플레이어 위치 기준 월드 축 상대 좌표 (posCamera). 북서쪽을 보면 앞이 북쪽에 더 가깝게 배치됩니다.");
+    }
+};
+
+// 로컬 위치 블록 정의 (posLocal - 정확한 시선 방향 기반)
+Blockly.Blocks['local_pos'] = {
+    init: function() {
+        this.appendValueInput("X")
+            .setCheck(["Number", "Variable"])
+            .appendField("로컬 위치  오른쪽");
+        this.appendValueInput("Y")
+            .setCheck(["Number", "Variable"])
+            .appendField("위");
+        this.appendValueInput("Z")
+            .setCheck(["Number", "Variable"])
+            .appendField("앞");
+        this.setInputsInline(true);
+        this.setOutput(true, "Position");
+        this.setColour('#69b090');
+        this.setTooltip("플레이어가 정확히 바라보는 시선 방향 기준 좌표 (posLocal). 아래를 보면 앞이 땅속을 가리킵니다.");
     }
 };
 

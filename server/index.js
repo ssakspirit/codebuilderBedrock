@@ -533,8 +533,11 @@ async function start() {
                 clientSocket.on("setblock", (data) => {
                     let prefix = '';
                     
-                    if (data.isCamera) {
-                        // 카메라 상대 위치: 플레이어 바라보는 방향 기준
+                    if (data.isLocal) {
+                        // 로컬 위치: 정확한 시선 방향 기준 (posLocal)
+                        prefix = '^';
+                    } else if (data.isCamera) {
+                        // 카메라 상대 위치: 월드 축 기반 (posCamera)
                         prefix = '^';
                     } else if (data.isFacing) {
                         // 바라보는 방향 기준
@@ -685,8 +688,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isCamera) {
-                            prefix = '^';
+                        if (centerPos.isLocal) {
+                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        } else if (centerPos.isCamera) {
+                            prefix = '^';  // 카메라 위치: 월드 축 기반
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }
@@ -838,8 +843,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isCamera) {
-                            prefix = '^';
+                        if (centerPos.isLocal) {
+                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        } else if (centerPos.isCamera) {
+                            prefix = '^';  // 카메라 위치: 월드 축 기반
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }
@@ -980,8 +987,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isCamera) {
-                            prefix = '^';
+                        if (centerPos.isLocal) {
+                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        } else if (centerPos.isCamera) {
+                            prefix = '^';  // 카메라 위치: 월드 축 기반
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }
