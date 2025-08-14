@@ -533,14 +533,11 @@ async function start() {
                 clientSocket.on("setblock", (data) => {
                     let prefix = '';
                     
-                    if (data.isLocal) {
-                        // 로컬 위치: 정확한 시선 방향 기준 (posLocal)
+                    if (data.isLocal || data.isFacing) {
+                        // 로컬/바라보는 방향: 정확한 시선 방향 기준 (posLocal)
                         prefix = '^';
                     } else if (data.isCamera) {
                         // 카메라 상대 위치: 월드 축 기반 (posCamera)
-                        prefix = '^';
-                    } else if (data.isFacing) {
-                        // 바라보는 방향 기준
                         prefix = '^';
                     } else if (data.isAbsolute) {
                         // 절대 좌표
@@ -688,10 +685,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isLocal) {
-                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        if (centerPos.isLocal || centerPos.isFacing) {
+                            prefix = '^';  // 로컬/바라보는 방향: 정확한 시선 방향 (posLocal)
                         } else if (centerPos.isCamera) {
-                            prefix = '^';  // 카메라 위치: 월드 축 기반
+                            prefix = '^';  // 카메라 위치: 월드 축 기반 (posCamera)
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }
@@ -843,10 +840,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isLocal) {
-                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        if (centerPos.isLocal || centerPos.isFacing) {
+                            prefix = '^';  // 로컬/바라보는 방향: 정확한 시선 방향 (posLocal)
                         } else if (centerPos.isCamera) {
-                            prefix = '^';  // 카메라 위치: 월드 축 기반
+                            prefix = '^';  // 카메라 위치: 월드 축 기반 (posCamera)
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }
@@ -987,10 +984,10 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        if (centerPos.isLocal) {
-                            prefix = '^';  // 로컬 위치: 정확한 시선 방향
+                        if (centerPos.isLocal || centerPos.isFacing) {
+                            prefix = '^';  // 로컬/바라보는 방향: 정확한 시선 방향 (posLocal)
                         } else if (centerPos.isCamera) {
-                            prefix = '^';  // 카메라 위치: 월드 축 기반
+                            prefix = '^';  // 카메라 위치: 월드 축 기반 (posCamera)
                         } else {
                             prefix = centerPos.isAbsolute === false ? '~' : '';
                         }

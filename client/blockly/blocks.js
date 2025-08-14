@@ -810,7 +810,7 @@ Blockly.Blocks['facing_pos'] = {
         this.setInputsInline(true);
         this.setOutput(true, "Position");
         this.setColour('#69b090');
-        this.setTooltip("바라보는 방향 기준의 상대 좌표를 지정합니다 (좌우/위아래/전후)");
+        this.setTooltip("정확한 시선 방향 기준 좌표 (posLocal). 플레이어가 아래를 보면 앞이 땅속을 가리킵니다.");
     }
 };
 
@@ -833,24 +833,6 @@ Blockly.Blocks['camera_pos'] = {
     }
 };
 
-// 로컬 위치 블록 정의 (posLocal - 정확한 시선 방향 기반)
-Blockly.Blocks['local_pos'] = {
-    init: function() {
-        this.appendValueInput("X")
-            .setCheck(["Number", "Variable"])
-            .appendField("로컬 위치  오른쪽");
-        this.appendValueInput("Y")
-            .setCheck(["Number", "Variable"])
-            .appendField("위");
-        this.appendValueInput("Z")
-            .setCheck(["Number", "Variable"])
-            .appendField("앞");
-        this.setInputsInline(true);
-        this.setOutput(true, "Position");
-        this.setColour('#69b090');
-        this.setTooltip("플레이어가 정확히 바라보는 시선 방향 기준 좌표 (posLocal). 아래를 보면 앞이 땅속을 가리킵니다.");
-    }
-};
 
 // 블록 설치 명령 블록 정의
 Blockly.Blocks['set_block'] = {

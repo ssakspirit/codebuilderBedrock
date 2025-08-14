@@ -96,7 +96,7 @@ Blockly.JavaScript['facing_pos'] = function(block) {
     const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
     const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
     const z = Blockly.JavaScript.valueToCode(block, 'Z', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-    const posObj = `{"x": Number(${x}), "y": Number(${y}), "z": Number(${z}), "isAbsolute": false, "isFacing": true}`;
+    const posObj = `{"x": Number(${x}), "y": Number(${y}), "z": Number(${z}), "isAbsolute": false, "isFacing": true, "isLocal": true}`;
     return [`JSON.stringify(${posObj})`, Blockly.JavaScript.ORDER_ATOMIC];
 };
 
@@ -115,17 +115,6 @@ Blockly.JavaScript['camera_pos'] = function(block) {
 // forBlock 방식도 지원
 Blockly.JavaScript.forBlock['camera_pos'] = Blockly.JavaScript['camera_pos'];
 
-// 로컬 위치 블록 코드 생성기 (posLocal - 정확한 시선 방향)
-Blockly.JavaScript['local_pos'] = function(block) {
-    const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-    const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-    const z = Blockly.JavaScript.valueToCode(block, 'Z', Blockly.JavaScript.ORDER_ATOMIC) || '0';
-    const posObj = `{"x": Number(${x}), "y": Number(${y}), "z": Number(${z}), "isAbsolute": false, "isLocal": true}`;
-    return [`JSON.stringify(${posObj})`, Blockly.JavaScript.ORDER_ATOMIC];
-};
-
-// forBlock 방식도 지원
-Blockly.JavaScript.forBlock['local_pos'] = Blockly.JavaScript['local_pos'];
 
 // 에이전트 이동 코드 생성기
 Blockly.JavaScript['agent_move'] = function(block) {

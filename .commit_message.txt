@@ -1,1 +1,1 @@
-📍 로컬 위치 블록 추가 (posCamera와 posLocal 두 방식 모두 구현)
+🔄 중복 로컬 위치 블록 제거, facing_pos를 posLocal로 통합
