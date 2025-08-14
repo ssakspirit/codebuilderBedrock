@@ -589,10 +589,19 @@ async function start() {
                     
                     const commands = [];
                     const r = parseInt(radius);
-                    const cx = center.x;
-                    const cy = center.y;
-                    const cz = center.z;
-                    const prefix = center.mode === 'relative' ? '~' : '';
+                    
+                    // center가 문자열로 전달되면 파싱
+                    let centerPos;
+                    if (typeof center === 'string') {
+                        centerPos = JSON.parse(center);
+                    } else {
+                        centerPos = center;
+                    }
+                    
+                    const cx = centerPos.x;
+                    const cy = centerPos.y;
+                    const cz = centerPos.z;
+                    const prefix = centerPos.isAbsolute === false ? '~' : '';
                     
                     // blockType에서 따옴표 제거 (JavaScript에서 전달될 때 따옴표가 포함될 수 있음)
                     const cleanBlockType = blockType.replace(/['"]/g, '');

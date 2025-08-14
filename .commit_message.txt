@@ -1,1 +1,1 @@
-🐛 원 모양 생성 오류 수정 (executingPlayer, blockType 처리)
+🐛 원 모양 center 좌표 파싱 오류 수정 (JSON.parse 추가)
