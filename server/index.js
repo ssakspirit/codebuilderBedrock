@@ -1071,6 +1071,181 @@ async function start() {
                     console.log('✅ 반구 모양 생성 완료');
                 });
 
+                // 선 모양 생성 처리
+                clientSocket.on("createLine", async (data) => {
+                    console.log('\n📏 선 모양 생성 요청 수신');
+                    console.log('  요청 데이터:', data);
+                    
+                    const { start, end, blockType, executingPlayer } = data;
+                    const startPos = start;
+                    const endPos = end;
+                    
+                    // 좌표 정리
+                    let sx, sy, sz, ex, ey, ez;
+                    let prefix = '';
+                    
+                    // 시작점 좌표 처리 (절대좌표로 가정)
+                    sx = Math.floor(startPos.x);
+                    sy = Math.floor(startPos.y);
+                    sz = Math.floor(startPos.z);
+                    
+                    // 끝점 좌표 처리 (절대좌표로 가정)
+                    ex = Math.floor(endPos.x);
+                    ey = Math.floor(endPos.y);
+                    ez = Math.floor(endPos.z);
+                    
+                    // blockType에서 따옴표 제거
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
+                    
+                    console.log(`📊 선 생성 정보:`);
+                    console.log(`   시작점: (${sx}, ${sy}, ${sz})`);
+                    console.log(`   끝점: (${ex}, ${ey}, ${ez})`);
+                    console.log(`   블록: ${cleanBlockType}`);
+                    
+                    // 3D 브레즌햄 선 알고리즘 (Bresenham's Line Algorithm 3D)
+                    const dx = Math.abs(ex - sx);
+                    const dy = Math.abs(ey - sy);
+                    const dz = Math.abs(ez - sz);
+                    
+                    const x_inc = (ex >= sx) ? 1 : -1;
+                    const y_inc = (ey >= sy) ? 1 : -1;
+                    const z_inc = (ez >= sz) ? 1 : -1;
+                    
+                    const err_1 = dx - dy;
+                    const err_2 = dx - dz;
+                    const err_3 = dy - dz;
+                    
+                    let x = sx, y = sy, z = sz;
+                    const dx2 = dx * 2;
+                    const dy2 = dy * 2;
+                    const dz2 = dz * 2;
+                    
+                    const linePoints = [];
+                    
+                    // 주 축에 따른 선 그리기
+                    if (dx >= dy && dx >= dz) {
+                        // x축이 주 축
+                        let err_xy = dx - dy;
+                        let err_xz = dx - dz;
+                        
+                        for (let i = 0; i < dx; i++) {
+                            linePoints.push({x, y, z});
+                            
+                            if (err_xy > 0) {
+                                if (err_xz > 0) {
+                                    x += x_inc;
+                                    err_xy -= dy2;
+                                    err_xz -= dz2;
+                                } else {
+                                    z += z_inc;
+                                    err_xy -= dy2;
+                                    err_xz += dx2;
+                                }
+                            } else {
+                                if (err_xz > 0) {
+                                    y += y_inc;
+                                    err_xy += dx2;
+                                    err_xz -= dz2;
+                                } else if (err_xy > err_xz) {
+                                    y += y_inc;
+                                    err_xy += dx2;
+                                    err_xz += dx2;
+                                } else {
+                                    z += z_inc;
+                                    err_xy += dx2;
+                                    err_xz += dx2;
+                                }
+                            }
+                        }
+                    } else if (dy >= dx && dy >= dz) {
+                        // y축이 주 축
+                        let err_yx = dy - dx;
+                        let err_yz = dy - dz;
+                        
+                        for (let i = 0; i < dy; i++) {
+                            linePoints.push({x, y, z});
+                            
+                            if (err_yx > 0) {
+                                if (err_yz > 0) {
+                                    y += y_inc;
+                                    err_yx -= dx2;
+                                    err_yz -= dz2;
+                                } else {
+                                    z += z_inc;
+                                    err_yx -= dx2;
+                                    err_yz += dy2;
+                                }
+                            } else {
+                                if (err_yz > 0) {
+                                    x += x_inc;
+                                    err_yx += dy2;
+                                    err_yz -= dz2;
+                                } else if (err_yx > err_yz) {
+                                    x += x_inc;
+                                    err_yx += dy2;
+                                    err_yz += dy2;
+                                } else {
+                                    z += z_inc;
+                                    err_yx += dy2;
+                                    err_yz += dy2;
+                                }
+                            }
+                        }
+                    } else {
+                        // z축이 주 축
+                        let err_zx = dz - dx;
+                        let err_zy = dz - dy;
+                        
+                        for (let i = 0; i < dz; i++) {
+                            linePoints.push({x, y, z});
+                            
+                            if (err_zx > 0) {
+                                if (err_zy > 0) {
+                                    z += z_inc;
+                                    err_zx -= dx2;
+                                    err_zy -= dy2;
+                                } else {
+                                    y += y_inc;
+                                    err_zx -= dx2;
+                                    err_zy += dz2;
+                                }
+                            } else {
+                                if (err_zy > 0) {
+                                    x += x_inc;
+                                    err_zx += dz2;
+                                    err_zy -= dy2;
+                                } else if (err_zx > err_zy) {
+                                    x += x_inc;
+                                    err_zx += dz2;
+                                    err_zy += dz2;
+                                } else {
+                                    y += y_inc;
+                                    err_zx += dz2;
+                                    err_zy += dz2;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 끝점도 추가
+                    linePoints.push({x: ex, y: ey, z: ez});
+                    
+                    console.log(`📏 생성할 점의 개수: ${linePoints.length}`);
+                    
+                    // 각 점에 블록 설치
+                    for (const point of linePoints) {
+                        const setBlockCommand = `setblock ${point.x} ${point.y} ${point.z} ${cleanBlockType}`;
+                        console.log(`🟩 블록 설치: ${setBlockCommand}`);
+                        
+                        if (ws && ws.readyState === 1) {
+                            send(setBlockCommand);
+                            await new Promise(resolve => setTimeout(resolve, 50)); // 50ms 지연
+                        }
+                    }
+                    
+                    console.log('✅ 선 모양 생성 완료');
+                });
+
                 // 플레이어 위치 조회 처리
                 clientSocket.on("getPlayerPosition", async (data) => {
                     const playerName = data.player || 'Unknown';

@@ -812,3 +812,76 @@ Blockly.JavaScript['player_position'] = function(block) {
 
 // forBlock 방식도 지원  
 Blockly.JavaScript.forBlock['player_position'] = Blockly.JavaScript['player_position'];
+
+// 선 모양 만들기 코드 생성기
+Blockly.JavaScript['create_line'] = function(block) {
+    const blockType = Blockly.JavaScript.valueToCode(block, 'BLOCK_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"grass_block"';
+    const start = Blockly.JavaScript.valueToCode(block, 'START', Blockly.JavaScript.ORDER_ATOMIC);
+    const end = Blockly.JavaScript.valueToCode(block, 'END', Blockly.JavaScript.ORDER_ATOMIC);
+
+    return `
+    (async () => {
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
+        const startPos = JSON.parse(${start});
+        const endPos = JSON.parse(${end});
+        const blockType = ${blockType};
+        let finalStart = startPos;
+        let finalEnd = endPos;
+        
+        console.log('📏 선 모양 생성 요청 (최적화됨)');
+        console.log('  시작점:', startPos);
+        console.log('  끝점:', endPos);
+        console.log('  블록 타입:', blockType);
+        console.log('  실행 플레이어:', executingPlayer);
+        console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
+        
+        // 클라이언트에서 상대좌표 변환 (서버 지연 제거)
+        if ((startPos.isAbsolute === false || endPos.isAbsolute === false) && executingPlayer && executingPlayer !== 'Unknown') {
+            console.log('📍 클라이언트에서 상대좌표 변환 중...');
+            const playerPosition = await new Promise(resolve => {
+                const resultListener = (result) => {
+                    socket.off('playerPositionResult', resultListener);
+                    resolve(result);
+                };
+                socket.on('playerPositionResult', resultListener);
+                socket.emit("getPlayerPosition", { player: executingPlayer });
+            });
+            
+            // 시작점이 상대좌표인 경우 변환
+            if (startPos.isAbsolute === false) {
+                finalStart = {
+                    x: playerPosition.x + startPos.x,
+                    y: playerPosition.y + startPos.y,
+                    z: playerPosition.z + startPos.z,
+                    isAbsolute: true
+                };
+            }
+            
+            // 끝점이 상대좌표인 경우 변환
+            if (endPos.isAbsolute === false) {
+                finalEnd = {
+                    x: playerPosition.x + endPos.x,
+                    y: playerPosition.y + endPos.y,
+                    z: playerPosition.z + endPos.z,
+                    isAbsolute: true
+                };
+            }
+            
+            console.log('📍 변환된 시작점:', finalStart);
+            console.log('📍 변환된 끝점:', finalEnd);
+        }
+        
+        // 서버로 선 생성 요청 전송
+        if (socket && socket.connected) {
+            socket.emit("createLine", {
+                start: finalStart,
+                end: finalEnd,
+                blockType: blockType,
+                executingPlayer: executingPlayer
+            });
+            console.log('✅ 선 모양 생성 요청 전송 완료 (최적화됨)');
+        } else {
+            console.error('❌ 소켓 연결이 되어있지 않음');
+        }
+    })();\n`;
+};

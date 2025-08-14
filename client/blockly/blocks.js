@@ -1454,6 +1454,26 @@ Blockly.Blocks['create_hemisphere'] = {
     }
 };
 
+// 선 모양 만들기 블록 정의
+Blockly.Blocks['create_line'] = {
+    init: function() {
+        this.appendValueInput('BLOCK_TYPE')
+            .setCheck(['String', 'BlockType'])
+            .appendField("선 모양 만들기:");
+        this.appendValueInput('START')
+            .setCheck('Position')
+            .appendField("시작");
+        this.appendValueInput('END')
+            .setCheck('Position')
+            .appendField("끝");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#ec7505');
+        this.setTooltip("시작점과 끝점을 직선으로 연결하여 블록을 설치합니다");
+        this.setInputsInline(false); // 세로로 정렬
+    }
+};
+
 // 플레이어 현재 위치 블록 정의
 Blockly.Blocks['player_position'] = {
     init: function() {
