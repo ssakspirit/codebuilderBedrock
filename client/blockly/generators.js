@@ -585,7 +585,7 @@ Blockly.JavaScript['create_circle'] = function(block) {
         
         // 상대좌표인 경우 클라이언트에서 미리 절대좌표로 변환
         let finalCenter = centerPos;
-        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+        if (centerPos.isAbsolute === false && !centerPos.isCamera && executingPlayer && executingPlayer !== 'Unknown') {
             console.log('📍 상대좌표 감지 - 클라이언트에서 위치 조회 중...');
             
             // 플레이어 위치 조회 (player_position 블록과 동일한 로직)
@@ -662,7 +662,7 @@ Blockly.JavaScript['create_sphere'] = function(block) {
         
         // 상대좌표인 경우 클라이언트에서 미리 절대좌표로 변환
         let finalCenter = centerPos;
-        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+        if (centerPos.isAbsolute === false && !centerPos.isCamera && executingPlayer && executingPlayer !== 'Unknown') {
             console.log('📍 상대좌표 감지 - 클라이언트에서 위치 조회 중...');
             
             const playerPosition = await new Promise(resolve => {
@@ -735,7 +735,7 @@ Blockly.JavaScript['create_hemisphere'] = function(block) {
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
         // 클라이언트에서 상대좌표 변환 (서버 지연 제거)
-        if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+        if (centerPos.isAbsolute === false && !centerPos.isCamera && executingPlayer && executingPlayer !== 'Unknown') {
             console.log('📍 클라이언트에서 상대좌표 변환 중...');
             const playerPosition = await new Promise(resolve => {
                 const resultListener = (result) => {
@@ -848,7 +848,7 @@ Blockly.JavaScript['create_line'] = function(block) {
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
         // 클라이언트에서 상대좌표 변환 (서버 지연 제거)
-        if ((startPos.isAbsolute === false || endPos.isAbsolute === false) && executingPlayer && executingPlayer !== 'Unknown') {
+        if ((startPos.isAbsolute === false && !startPos.isCamera) || (endPos.isAbsolute === false && !endPos.isCamera) && executingPlayer && executingPlayer !== 'Unknown') {
             console.log('📍 클라이언트에서 상대좌표 변환 중...');
             const playerPosition = await new Promise(resolve => {
                 const resultListener = (result) => {
@@ -859,8 +859,8 @@ Blockly.JavaScript['create_line'] = function(block) {
                 socket.emit("getPlayerPosition", { player: executingPlayer });
             });
             
-            // 시작점이 상대좌표인 경우 변환
-            if (startPos.isAbsolute === false) {
+            // 시작점이 상대좌표인 경우 변환 (카메라 좌표는 제외)
+            if (startPos.isAbsolute === false && !startPos.isCamera) {
                 finalStart = {
                     x: playerPosition.x + startPos.x,
                     y: playerPosition.y + startPos.y,
@@ -869,8 +869,8 @@ Blockly.JavaScript['create_line'] = function(block) {
                 };
             }
             
-            // 끝점이 상대좌표인 경우 변환
-            if (endPos.isAbsolute === false) {
+            // 끝점이 상대좌표인 경우 변환 (카메라 좌표는 제외)
+            if (endPos.isAbsolute === false && !endPos.isCamera) {
                 finalEnd = {
                     x: playerPosition.x + endPos.x,
                     y: playerPosition.y + endPos.y,

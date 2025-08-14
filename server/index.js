@@ -685,7 +685,11 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                        if (centerPos.isCamera) {
+                            prefix = '^';
+                        } else {
+                            prefix = centerPos.isAbsolute === false ? '~' : '';
+                        }
                     }
                     
                     // blockType에서 따옴표 제거 (JavaScript에서 전달될 때 따옴표가 포함될 수 있음)
@@ -834,7 +838,11 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                        if (centerPos.isCamera) {
+                            prefix = '^';
+                        } else {
+                            prefix = centerPos.isAbsolute === false ? '~' : '';
+                        }
                     }
                     
                     // blockType에서 따옴표 제거
@@ -972,7 +980,11 @@ async function start() {
                         cx = centerPos.x;
                         cy = centerPos.y;
                         cz = centerPos.z;
-                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                        if (centerPos.isCamera) {
+                            prefix = '^';
+                        } else {
+                            prefix = centerPos.isAbsolute === false ? '~' : '';
+                        }
                     }
                     
                     // blockType에서 따옴표 제거
