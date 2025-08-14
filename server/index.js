@@ -608,14 +608,11 @@ async function start() {
                             console.log('------------------------');
                             send('gamerule sendcommandfeedback false');  // 명령어 피드백 끄기
                             
-                            // 실행하는 플레이어에게 채팅창 닫기 명령 전송
+                            // 모든 플레이어에게 채팅창 닫기 명령 전송 (웹소켓 접속자와 비접속자 모두)
+                            send('closechat');  // 호스트에게 채팅창 닫기
                             if (playerName && playerName !== 'Unknown') {
-                                const closeChatCommand = sendPlayerCommand(playerName, 'closechat', '채팅창 닫기');
-                                if (closeChatCommand) {
-                                    send(closeChatCommand);
-                                }
-                            } else {
-                                send('closechat');  // 호스트에게 채팅창 닫기
+                                // 명령어 실행자가 호스트가 아닌 경우, 해당 플레이어에게도 직접 전송
+                                send(`execute "${playerName}" ~ ~ ~ closechat`);
                             }
                             
                             // 플레이어 정보와 함께 명령어 실행
