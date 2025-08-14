@@ -59,6 +59,9 @@ Blockly.JavaScript['set_block'] = function(block) {
                         z: pos.z,
                         blockType: ${blockType},
                         isAbsolute: pos.isAbsolute,
+                        isCamera: pos.isCamera,
+                        isFacing: pos.isFacing,
+                        isLocal: pos.isLocal,
                         executingPlayer: window.currentExecutingPlayer
                     });
                     console.log('✅ setblock 이벤트 전송 완료');

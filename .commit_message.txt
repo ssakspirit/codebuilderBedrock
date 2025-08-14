@@ -1,1 +1,1 @@
-🔄 중복 로컬 위치 블록 제거, facing_pos를 posLocal로 통합
+🔧 set_block에서 카메라/로컬 위치 속성 누락 문제 수정

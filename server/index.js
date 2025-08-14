@@ -531,6 +531,13 @@ async function start() {
 
                 // 블록 설치 명령어 처리
                 clientSocket.on("setblock", (data) => {
+                    console.log('🔍 블록 설치 데이터 디버깅:');
+                    console.log('   data:', JSON.stringify(data, null, 2));
+                    console.log('   isLocal:', data.isLocal);
+                    console.log('   isFacing:', data.isFacing);
+                    console.log('   isCamera:', data.isCamera);
+                    console.log('   isAbsolute:', data.isAbsolute);
+                    
                     let prefix = '';
                     
                     if (data.isLocal || data.isFacing) {
@@ -548,6 +555,7 @@ async function start() {
                     }
                     
                     const command = `setblock ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z} ${data.blockType}`;
+                    console.log('   최종 명령어:', command);
                     
                     // 통합 함수 사용
                     const finalCommand = sendPlayerCommand(data.executingPlayer, command, '블록 설치');
