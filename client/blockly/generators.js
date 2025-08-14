@@ -543,7 +543,7 @@ Blockly.JavaScript['create_circle'] = function(block) {
 
     return `
     (async () => {
-        const executingPlayer = window.executingPlayer || 'Unknown';
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
         const centerPos = ${center};
         const r = ${radius};
         const blockType = ${blockType};

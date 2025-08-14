@@ -594,12 +594,15 @@ async function start() {
                     const cz = center.z;
                     const prefix = center.mode === 'relative' ? '~' : '';
                     
+                    // blockType에서 따옴표 제거 (JavaScript에서 전달될 때 따옴표가 포함될 수 있음)
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
+                    
                     console.log(`📊 원 생성 정보:`);
                     console.log(`   중심: (${cx}, ${cy}, ${cz})`);
                     console.log(`   반지름: ${r}`);
                     console.log(`   방향: ${direction}`);
                     console.log(`   모드: ${mode}`);
-                    console.log(`   블록: ${blockType}`);
+                    console.log(`   블록: ${cleanBlockType}`);
                     
                     // 원 생성 알고리즘
                     if (direction === 'y') {
@@ -620,7 +623,7 @@ async function start() {
                                     const finalY = cy;
                                     const finalZ = cz + z;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }
@@ -643,7 +646,7 @@ async function start() {
                                     const finalY = cy + y;
                                     const finalZ = cz + z;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }
@@ -666,7 +669,7 @@ async function start() {
                                     const finalY = cy + y;
                                     const finalZ = cz;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }

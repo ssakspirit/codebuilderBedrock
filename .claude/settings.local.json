@@ -11,7 +11,8 @@
       "WebFetch(domain:bedrockpy.readthedocs.io)",
       "Edit(.commit_message.txt)",
       "Bash(git revert:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
