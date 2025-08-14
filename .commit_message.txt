@@ -1,1 +1,1 @@
-🔧 set_block에서 카메라/로컬 위치 속성 누락 문제 수정
+🎯 posCamera와 posLocal 차이점 구현 (카메라는 ~좌표, 로컬은 ^좌표)

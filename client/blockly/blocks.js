@@ -829,7 +829,7 @@ Blockly.Blocks['camera_pos'] = {
         this.setInputsInline(true);
         this.setOutput(true, "Position");
         this.setColour('#69b090');
-        this.setTooltip("플레이어 위치 기준 월드 축 상대 좌표 (posCamera). 북서쪽을 보면 앞이 북쪽에 더 가깝게 배치됩니다.");
+        this.setTooltip("월드 축 기준 근사 좌표 (posCamera). 북서쪽을 보면 앞이 북쪽/서쪽 중 더 가까운 방향으로 배치됩니다. 일반 상대좌표 사용.");
     }
 };
 
