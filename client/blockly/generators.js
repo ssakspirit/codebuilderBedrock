@@ -850,8 +850,10 @@ Blockly.JavaScript['create_line'] = function(block) {
         console.log('  실행 플레이어:', executingPlayer);
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
-        // 클라이언트에서 상대좌표 변환 (서버 지연 제거)
-        if (((startPos.isAbsolute === false && !startPos.isLocal) || (endPos.isAbsolute === false && !endPos.isLocal)) && executingPlayer && executingPlayer !== 'Unknown') {
+        // 클라이언트에서 상대좌표 변환 (서버 지연 제거) - 카메라와 로컬 좌표는 서버에서 처리
+        if (((startPos.isAbsolute === false && !startPos.isLocal && !startPos.isCamera) || 
+             (endPos.isAbsolute === false && !endPos.isLocal && !endPos.isCamera)) && 
+            executingPlayer && executingPlayer !== 'Unknown') {
             console.log('📍 클라이언트에서 상대좌표 변환 중...');
             const playerPosition = await new Promise(resolve => {
                 const resultListener = (result) => {
@@ -862,8 +864,8 @@ Blockly.JavaScript['create_line'] = function(block) {
                 socket.emit("getPlayerPosition", { player: executingPlayer });
             });
             
-            // 시작점이 상대좌표인 경우 변환 (로컬 좌표는 제외, 카메라는 포함)
-            if (startPos.isAbsolute === false && !startPos.isLocal) {
+            // 시작점이 일반 상대좌표인 경우만 변환 (로컬과 카메라 좌표는 서버에서 처리)
+            if (startPos.isAbsolute === false && !startPos.isLocal && !startPos.isCamera) {
                 finalStart = {
                     x: playerPosition.x + startPos.x,
                     y: playerPosition.y + startPos.y,
@@ -872,8 +874,8 @@ Blockly.JavaScript['create_line'] = function(block) {
                 };
             }
             
-            // 끝점이 상대좌표인 경우 변환 (로컬 좌표는 제외, 카메라는 포함)
-            if (endPos.isAbsolute === false && !endPos.isLocal) {
+            // 끝점이 일반 상대좌표인 경우만 변환 (로컬과 카메라 좌표는 서버에서 처리)
+            if (endPos.isAbsolute === false && !endPos.isLocal && !endPos.isCamera) {
                 finalEnd = {
                     x: playerPosition.x + endPos.x,
                     y: playerPosition.y + endPos.y,
