@@ -607,7 +607,17 @@ async function start() {
                             console.log('✅ 명령어 실행 시작');
                             console.log('------------------------');
                             send('gamerule sendcommandfeedback false');  // 명령어 피드백 끄기
-                            send('closechat');  // 채팅창 닫기
+                            
+                            // 실행하는 플레이어에게 채팅창 닫기 명령 전송
+                            if (playerName && playerName !== 'Unknown') {
+                                const closeChatCommand = sendPlayerCommand(playerName, 'closechat', '채팅창 닫기');
+                                if (closeChatCommand) {
+                                    send(closeChatCommand);
+                                }
+                            } else {
+                                send('closechat');  // 호스트에게 채팅창 닫기
+                            }
+                            
                             // 플레이어 정보와 함께 명령어 실행
                             commandData.socket.emit('executeCommands', { 
                                 blockId: commandData.blockId,
