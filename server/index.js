@@ -707,11 +707,140 @@ async function start() {
                 });
 
                 // 블록 채우기 명령어 처리
-                clientSocket.on("fill", (data) => {
-                    const command = typeof data === 'string' ? data : data.command;
-                    const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                clientSocket.on("fill", async (data) => {
+                    // 이전 호환성을 위한 처리 (command만 있는 경우)
+                    if (typeof data === 'string' || (data.command && !data.startPos && !data.endPos)) {
+                        const command = typeof data === 'string' ? data : data.command;
+                        const executingPlayer = typeof data === 'object' ? data.executingPlayer : null;
+                        
+                        const finalCommand = sendPlayerCommand(executingPlayer, command, '블록 채우기');
+                        if (finalCommand) {
+                            send(finalCommand);
+                        }
+                        return;
+                    }
                     
-                    // 통합 함수 사용
+                    // 새로운 카메라 위치 처리
+                    const { startPos, endPos, blockType, fillMode, executingPlayer } = data;
+                    let finalStartPos = startPos;
+                    let finalEndPos = endPos;
+                    
+                    console.log('🔍 블록 채우기 데이터 디버깅:');
+                    console.log('   startPos:', JSON.stringify(startPos, null, 2));
+                    console.log('   endPos:', JSON.stringify(endPos, null, 2));
+                    
+                    // 시작점 카메라 위치 처리
+                    if (startPos.isCamera) {
+                        console.log('   → 시작점 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
+                        
+                        try {
+                            const playerDirection = await new Promise((resolve) => {
+                                const queryCommand = `querytarget "${executingPlayer}"`;
+                                console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                
+                                const responseHandler = (message) => {
+                                    try {
+                                        const messageStr = message.toString();
+                                        console.log('📍 방향 조회 응답:', messageStr);
+                                        
+                                        const jsonData = JSON.parse(messageStr);
+                                        if (jsonData.body && jsonData.body.details) {
+                                            const details = JSON.parse(jsonData.body.details);
+                                            if (details && details[0] && details[0].yRot !== undefined) {
+                                                const yaw = parseFloat(details[0].yRot);
+                                                console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                socket.off('message', responseHandler);
+                                                resolve(yaw);
+                                                return;
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                    }
+                                };
+                                
+                                socket.on('message', responseHandler);
+                                
+                                setTimeout(() => {
+                                    socket.off('message', responseHandler);
+                                    console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                    resolve(0);
+                                }, 1000);
+                                
+                                send(queryCommand);
+                            });
+                            
+                            const convertedStartCoords = convertCameraPosition(startPos.x, startPos.y, startPos.z, playerDirection);
+                            console.log('🎯 시작점 카메라 좌표 변환:', convertedStartCoords);
+                            
+                            finalStartPos = convertedStartCoords;
+                            
+                        } catch (error) {
+                            console.error('❌ 시작점 카메라 위치 처리 오류:', error);
+                        }
+                    }
+                    
+                    // 끝점 카메라 위치 처리
+                    if (endPos.isCamera) {
+                        console.log('   → 끝점 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
+                        
+                        try {
+                            const playerDirection = await new Promise((resolve) => {
+                                const queryCommand = `querytarget "${executingPlayer}"`;
+                                console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                
+                                const responseHandler = (message) => {
+                                    try {
+                                        const messageStr = message.toString();
+                                        console.log('📍 방향 조회 응답:', messageStr);
+                                        
+                                        const jsonData = JSON.parse(messageStr);
+                                        if (jsonData.body && jsonData.body.details) {
+                                            const details = JSON.parse(jsonData.body.details);
+                                            if (details && details[0] && details[0].yRot !== undefined) {
+                                                const yaw = parseFloat(details[0].yRot);
+                                                console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                socket.off('message', responseHandler);
+                                                resolve(yaw);
+                                                return;
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                    }
+                                };
+                                
+                                socket.on('message', responseHandler);
+                                
+                                setTimeout(() => {
+                                    socket.off('message', responseHandler);
+                                    console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                    resolve(0);
+                                }, 1000);
+                                
+                                send(queryCommand);
+                            });
+                            
+                            const convertedEndCoords = convertCameraPosition(endPos.x, endPos.y, endPos.z, playerDirection);
+                            console.log('🎯 끝점 카메라 좌표 변환:', convertedEndCoords);
+                            
+                            finalEndPos = convertedEndCoords;
+                            
+                        } catch (error) {
+                            console.error('❌ 끝점 카메라 위치 처리 오류:', error);
+                        }
+                    }
+                    
+                    // prefix 결정
+                    const startPrefix = startPos.isFacing ? '^' : (startPos.isAbsolute ? '' : '~');
+                    const endPrefix = endPos.isFacing ? '^' : (endPos.isAbsolute ? '' : '~');
+                    
+                    // 최종 명령어 생성
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
+                    const command = `fill ${startPrefix}${finalStartPos.x} ${startPrefix}${finalStartPos.y} ${startPrefix}${finalStartPos.z} ${endPrefix}${finalEndPos.x} ${endPrefix}${finalEndPos.y} ${endPrefix}${finalEndPos.z} ${cleanBlockType} ${fillMode}`;
+                    
+                    console.log('🧱 블록 채우기 명령어:', command);
+                    
                     const finalCommand = sendPlayerCommand(executingPlayer, command, '블록 채우기');
                     if (finalCommand) {
                         send(finalCommand);

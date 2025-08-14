@@ -454,14 +454,44 @@ Blockly.JavaScript['fill_blocks'] = function(block) {
                 console.log('실행이 중단되었습니다.');
                 return;
             }
-            await new Promise(resolve => {
+            await new Promise(async resolve => {
                 const start = JSON.parse(${startPos});
                 const end = JSON.parse(${endPos});
-                const startPrefix = start.isFacing ? '^' : (start.isAbsolute ? '' : '~');
-                const endPrefix = end.isFacing ? '^' : (end.isAbsolute ? '' : '~');
+                
+                // 카메라 위치 처리를 위한 prefix 결정
+                let startPrefix, endPrefix;
+                
+                if (start.isFacing) {
+                    startPrefix = '^';
+                } else if (start.isCamera) {
+                    // 카메라 위치는 서버에서 처리하도록 상대 좌표로 표시
+                    startPrefix = '~';
+                    console.log('🎯 시작점 카메라 위치 감지 - 서버에서 처리됩니다');
+                } else if (start.isAbsolute) {
+                    startPrefix = '';
+                } else {
+                    startPrefix = '~';
+                }
+                
+                if (end.isFacing) {
+                    endPrefix = '^';
+                } else if (end.isCamera) {
+                    // 카메라 위치는 서버에서 처리하도록 상대 좌표로 표시
+                    endPrefix = '~';
+                    console.log('🎯 끝점 카메라 위치 감지 - 서버에서 처리됩니다');
+                } else if (end.isAbsolute) {
+                    endPrefix = '';
+                } else {
+                    endPrefix = '~';
+                }
+                
                 const command = \`fill \${startPrefix}\${start.x} \${startPrefix}\${start.y} \${startPrefix}\${start.z} \${endPrefix}\${end.x} \${endPrefix}\${end.y} \${endPrefix}\${end.z} \${${blockType}} ${fillMode}\`;
                 socket.emit("fill", {
                     command: command,
+                    startPos: start,
+                    endPos: end,
+                    blockType: ${blockType},
+                    fillMode: '${fillMode}',
                     executingPlayer: window.currentExecutingPlayer
                 });
                 setTimeout(resolve, 150);
