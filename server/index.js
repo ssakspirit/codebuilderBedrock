@@ -1102,133 +1102,29 @@ async function start() {
                     console.log(`   끝점: (${ex}, ${ey}, ${ez})`);
                     console.log(`   블록: ${cleanBlockType}`);
                     
-                    // 3D 브레즌햄 선 알고리즘 (Bresenham's Line Algorithm 3D)
-                    const dx = Math.abs(ex - sx);
-                    const dy = Math.abs(ey - sy);
-                    const dz = Math.abs(ez - sz);
+                    // 선형 보간 알고리즘 (Linear Interpolation)
+                    const dx = ex - sx;
+                    const dy = ey - sy;
+                    const dz = ez - sz;
                     
-                    const x_inc = (ex >= sx) ? 1 : -1;
-                    const y_inc = (ey >= sy) ? 1 : -1;
-                    const z_inc = (ez >= sz) ? 1 : -1;
-                    
-                    const err_1 = dx - dy;
-                    const err_2 = dx - dz;
-                    const err_3 = dy - dz;
-                    
-                    let x = sx, y = sy, z = sz;
-                    const dx2 = dx * 2;
-                    const dy2 = dy * 2;
-                    const dz2 = dz * 2;
-                    
+                    // 가장 긴 축의 거리를 구해서 보간 단계 수 결정
+                    const maxDistance = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
                     const linePoints = [];
                     
-                    // 주 축에 따른 선 그리기
-                    if (dx >= dy && dx >= dz) {
-                        // x축이 주 축
-                        let err_xy = dx - dy;
-                        let err_xz = dx - dz;
+                    // 시작점부터 끝점까지 균등하게 보간
+                    for (let i = 0; i <= maxDistance; i++) {
+                        const t = maxDistance === 0 ? 0 : i / maxDistance; // 보간 비율 (0 ~ 1)
                         
-                        for (let i = 0; i < dx; i++) {
-                            linePoints.push({x, y, z});
-                            
-                            if (err_xy > 0) {
-                                if (err_xz > 0) {
-                                    x += x_inc;
-                                    err_xy -= dy2;
-                                    err_xz -= dz2;
-                                } else {
-                                    z += z_inc;
-                                    err_xy -= dy2;
-                                    err_xz += dx2;
-                                }
-                            } else {
-                                if (err_xz > 0) {
-                                    y += y_inc;
-                                    err_xy += dx2;
-                                    err_xz -= dz2;
-                                } else if (err_xy > err_xz) {
-                                    y += y_inc;
-                                    err_xy += dx2;
-                                    err_xz += dx2;
-                                } else {
-                                    z += z_inc;
-                                    err_xy += dx2;
-                                    err_xz += dx2;
-                                }
-                            }
-                        }
-                    } else if (dy >= dx && dy >= dz) {
-                        // y축이 주 축
-                        let err_yx = dy - dx;
-                        let err_yz = dy - dz;
+                        const x = Math.round(sx + t * dx);
+                        const y = Math.round(sy + t * dy);
+                        const z = Math.round(sz + t * dz);
                         
-                        for (let i = 0; i < dy; i++) {
+                        // 중복 좌표 제거 (연속된 같은 좌표 방지)
+                        const lastPoint = linePoints[linePoints.length - 1];
+                        if (!lastPoint || lastPoint.x !== x || lastPoint.y !== y || lastPoint.z !== z) {
                             linePoints.push({x, y, z});
-                            
-                            if (err_yx > 0) {
-                                if (err_yz > 0) {
-                                    y += y_inc;
-                                    err_yx -= dx2;
-                                    err_yz -= dz2;
-                                } else {
-                                    z += z_inc;
-                                    err_yx -= dx2;
-                                    err_yz += dy2;
-                                }
-                            } else {
-                                if (err_yz > 0) {
-                                    x += x_inc;
-                                    err_yx += dy2;
-                                    err_yz -= dz2;
-                                } else if (err_yx > err_yz) {
-                                    x += x_inc;
-                                    err_yx += dy2;
-                                    err_yz += dy2;
-                                } else {
-                                    z += z_inc;
-                                    err_yx += dy2;
-                                    err_yz += dy2;
-                                }
-                            }
-                        }
-                    } else {
-                        // z축이 주 축
-                        let err_zx = dz - dx;
-                        let err_zy = dz - dy;
-                        
-                        for (let i = 0; i < dz; i++) {
-                            linePoints.push({x, y, z});
-                            
-                            if (err_zx > 0) {
-                                if (err_zy > 0) {
-                                    z += z_inc;
-                                    err_zx -= dx2;
-                                    err_zy -= dy2;
-                                } else {
-                                    y += y_inc;
-                                    err_zx -= dx2;
-                                    err_zy += dz2;
-                                }
-                            } else {
-                                if (err_zy > 0) {
-                                    x += x_inc;
-                                    err_zx += dz2;
-                                    err_zy -= dy2;
-                                } else if (err_zx > err_zy) {
-                                    x += x_inc;
-                                    err_zx += dz2;
-                                    err_zy += dz2;
-                                } else {
-                                    y += y_inc;
-                                    err_zx += dz2;
-                                    err_zy += dz2;
-                                }
-                            }
                         }
                     }
-                    
-                    // 끝점도 추가
-                    linePoints.push({x: ex, y: ey, z: ez});
                     
                     console.log(`📏 생성할 점의 개수: ${linePoints.length}`);
                     
