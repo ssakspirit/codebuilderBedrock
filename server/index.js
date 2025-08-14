@@ -632,13 +632,8 @@ async function start() {
                     const commands = [];
                     const r = parseInt(radius);
                     
-                    // center가 문자열로 전달되면 파싱
-                    let centerPos;
-                    if (typeof center === 'string') {
-                        centerPos = JSON.parse(center);
-                    } else {
-                        centerPos = center;
-                    }
+                    // center는 이제 직접 객체로 전달됨
+                    const centerPos = center;
                     
                     let cx, cy, cz, prefix;
                     
