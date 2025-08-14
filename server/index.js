@@ -1237,10 +1237,12 @@ async function start() {
                         const setBlockCommand = `setblock ${point.x} ${point.y} ${point.z} ${cleanBlockType}`;
                         console.log(`🟩 블록 설치: ${setBlockCommand}`);
                         
-                        if (ws && ws.readyState === 1) {
-                            send(setBlockCommand);
-                            await new Promise(resolve => setTimeout(resolve, 50)); // 50ms 지연
+                        const finalCommand = sendPlayerCommand(executingPlayer, setBlockCommand, '선 생성');
+                        if (finalCommand) {
+                            send(finalCommand);
                         }
+                        
+                        await new Promise(resolve => setTimeout(resolve, 50)); // 50ms 지연
                     }
                     
                     console.log('✅ 선 모양 생성 완료');
