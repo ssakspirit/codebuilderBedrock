@@ -1430,12 +1430,12 @@ Blockly.Blocks['create_hemisphere'] = {
         this.appendDummyInput()
             .appendField("방향")
             .appendField(new Blockly.FieldDropdown([
-                ["x축 양의 방향", "x"],
-                ["x축 음의 방향", "-x"],
-                ["y축 양의 방향", "y"],
-                ["y축 음의 방향", "-y"],
-                ["z축 양의 방향", "z"],
-                ["z축 음의 방향", "-z"]
+                ["+x", "x"],
+                ["-x", "-x"],
+                ["+y", "y"],
+                ["-y", "-y"],
+                ["+z", "z"],
+                ["-z", "-z"]
             ]), "AXIS");
         this.appendDummyInput()
             .appendField("모드타입")
