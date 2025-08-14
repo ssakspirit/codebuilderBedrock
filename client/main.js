@@ -582,4 +582,84 @@ socket.on('executeCommands', async function(data) {
         console.log('❌ 명령어 블록을 찾을 수 없음');
         showNotification('해당 명령어 블록을 찾을 수 없습니다.');
     }
-}); 
+}
+
+// 파일 저장 기능
+function saveWorkspace() {
+    try {
+        // 현재 워크스페이스를 XML로 변환
+        const xml = Blockly.Xml.workspaceToDom(workspace);
+        const xmlText = Blockly.Xml.domToPrettyText(xml);
+        
+        // 현재 날짜/시간으로 파일 이름 생성
+        const now = new Date();
+        const timestamp = now.getFullYear() + 
+            String(now.getMonth() + 1).padStart(2, '0') + 
+            String(now.getDate()).padStart(2, '0') + '_' +
+            String(now.getHours()).padStart(2, '0') + 
+            String(now.getMinutes()).padStart(2, '0');
+        const filename = `마인크래프트_블록_${timestamp}.xml`;
+        
+        // 파일 다운로드
+        const blob = new Blob([xmlText], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('✅ 파일 저장 완료:', filename);
+        showNotification('파일이 저장되었습니다: ' + filename);
+    } catch (error) {
+        console.error('❌ 파일 저장 실패:', error);
+        showNotification('파일 저장에 실패했습니다: ' + error.message);
+    }
+}
+
+// 파일 불러오기 기능
+function loadWorkspace() {
+    try {
+        // 숨겨진 파일 입력 요소 생성
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xml';
+        input.style.display = 'none';
+        
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const xmlText = e.target.result;
+                    const xml = Blockly.Xml.textToDom(xmlText);
+                    
+                    // 기존 워크스페이스 내용 지우기
+                    workspace.clear();
+                    
+                    // 새로운 블록들 로드
+                    Blockly.Xml.domToWorkspace(xml, workspace);
+                    
+                    console.log('✅ 파일 불러오기 완료:', file.name);
+                    showNotification('파일을 불러왔습니다: ' + file.name);
+                } catch (error) {
+                    console.error('❌ 파일 불러오기 실패:', error);
+                    showNotification('파일 불러오기에 실패했습니다: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+            document.body.removeChild(input);
+        };
+        
+        document.body.appendChild(input);
+        input.click();
+    } catch (error) {
+        console.error('❌ 파일 불러오기 실패:', error);
+        showNotification('파일 불러오기에 실패했습니다: ' + error.message);
+    }
+}
