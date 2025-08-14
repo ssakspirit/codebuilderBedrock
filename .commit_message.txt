@@ -1,0 +1,1 @@
+🐛 원 생성 center 객체 전달 오류 수정 (JSON.parse 처리)

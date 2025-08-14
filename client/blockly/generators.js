@@ -543,8 +543,8 @@ Blockly.JavaScript['create_circle'] = function(block) {
 
     return `
     (async () => {
-        const executingPlayer = window.executingPlayer || 'Unknown';
-        const centerPos = ${center};
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
+        const centerPos = JSON.parse(${center});
         const r = ${radius};
         const blockType = ${blockType};
         
@@ -554,17 +554,22 @@ Blockly.JavaScript['create_circle'] = function(block) {
         console.log('  방향:', '${direction}');
         console.log('  모드:', '${mode}');
         console.log('  블록 타입:', blockType);
+        console.log('  실행 플레이어:', executingPlayer);
+        console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
         // 서버로 원 생성 요청 전송
-        socket.emit("createCircle", {
-            center: centerPos,
-            radius: r,
-            direction: '${direction}',
-            mode: '${mode}',
-            blockType: blockType,
-            executingPlayer: executingPlayer
-        });
-        
-        console.log('✅ 원 모양 생성 요청 전송 완료');
+        if (socket && socket.connected) {
+            socket.emit("createCircle", {
+                center: centerPos,
+                radius: r,
+                direction: '${direction}',
+                mode: '${mode}',
+                blockType: blockType,
+                executingPlayer: executingPlayer
+            });
+            console.log('✅ 원 모양 생성 요청 전송 완료');
+        } else {
+            console.error('❌ 소켓 연결이 되어있지 않음');
+        }
     })();\n`;
 };

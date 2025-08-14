@@ -575,6 +575,48 @@ async function start() {
                     }
                 });
 
+                // 플레이어 위치 쿼리 함수
+                function getPlayerPosition(playerName) {
+                    return new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('플레이어 위치 쿼리 타임아웃'));
+                        }, 3000);
+
+                        const queryCommand = `querytarget "${playerName}"`;
+                        console.log('📍 플레이어 위치 쿼리:', queryCommand);
+                        
+                        // 응답 대기를 위한 임시 이벤트 리스너
+                        const responseHandler = (message) => {
+                            try {
+                                const data = JSON.parse(message);
+                                if (data.header.messagePurpose === 'commandResponse' && 
+                                    data.body.commandLine && data.body.commandLine.includes('querytarget')) {
+                                    
+                                    clearTimeout(timeout);
+                                    socket.off('message', responseHandler);
+                                    
+                                    if (data.body.details && data.body.details.length > 0) {
+                                        const player = data.body.details[0];
+                                        console.log('✅ 플레이어 위치 수신:', player.position);
+                                        resolve({
+                                            x: Math.floor(player.position.x),
+                                            y: Math.floor(player.position.y), 
+                                            z: Math.floor(player.position.z)
+                                        });
+                                    } else {
+                                        reject(new Error('플레이어 위치 정보 없음'));
+                                    }
+                                }
+                            } catch (e) {
+                                // JSON 파싱 오류는 무시 (다른 메시지일 수 있음)
+                            }
+                        };
+
+                        socket.on('message', responseHandler);
+                        send(queryCommand);
+                    });
+                }
+
                 // 원 모양 생성 처리
                 clientSocket.on("createCircle", async (data) => {
                     console.log('\n🔴 원 모양 생성 요청 수신');
@@ -589,17 +631,57 @@ async function start() {
                     
                     const commands = [];
                     const r = parseInt(radius);
-                    const cx = center.x;
-                    const cy = center.y;
-                    const cz = center.z;
-                    const prefix = center.mode === 'relative' ? '~' : '';
+                    
+                    // center는 이제 직접 객체로 전달됨
+                    const centerPos = center;
+                    
+                    let cx, cy, cz, prefix;
+                    
+                    console.log('🔍 좌표 모드 확인:');
+                    console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   executingPlayer:', executingPlayer);
+                    console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
+                    
+                    // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
+                    if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+                        try {
+                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                            const playerPos = await getPlayerPosition(executingPlayer);
+                            
+                            cx = playerPos.x + centerPos.x;
+                            cy = playerPos.y + centerPos.y;
+                            cz = playerPos.z + centerPos.z;
+                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                            
+                            console.log(`🎯 좌표 변환 완료:`);
+                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                        } catch (error) {
+                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                            // 실패 시 원래 상대좌표 사용
+                            cx = centerPos.x;
+                            cy = centerPos.y;
+                            cz = centerPos.z;
+                            prefix = '~';
+                        }
+                    } else {
+                        // 절대좌표인 경우 그대로 사용
+                        cx = centerPos.x;
+                        cy = centerPos.y;
+                        cz = centerPos.z;
+                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                    }
+                    
+                    // blockType에서 따옴표 제거 (JavaScript에서 전달될 때 따옴표가 포함될 수 있음)
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
                     
                     console.log(`📊 원 생성 정보:`);
                     console.log(`   중심: (${cx}, ${cy}, ${cz})`);
                     console.log(`   반지름: ${r}`);
                     console.log(`   방향: ${direction}`);
                     console.log(`   모드: ${mode}`);
-                    console.log(`   블록: ${blockType}`);
+                    console.log(`   블록: ${cleanBlockType}`);
                     
                     // 원 생성 알고리즘
                     if (direction === 'y') {
@@ -620,7 +702,7 @@ async function start() {
                                     const finalY = cy;
                                     const finalZ = cz + z;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }
@@ -643,7 +725,7 @@ async function start() {
                                     const finalY = cy + y;
                                     const finalZ = cz + z;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }
@@ -666,7 +748,7 @@ async function start() {
                                     const finalY = cy + y;
                                     const finalZ = cz;
                                     
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
                                     commands.push(command);
                                 }
                             }
