@@ -804,31 +804,91 @@ async function start() {
                     
                     console.log('🔍 좌표 모드 확인:');
                     console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   centerPos.isCamera:', centerPos.isCamera);
                     console.log('   executingPlayer:', executingPlayer);
                     console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
                     
                     // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
                     if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
-                        try {
-                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
-                            const playerPos = await getPlayerPosition(executingPlayer);
+                        // 카메라 상대 위치 처리 확인
+                        if (centerPos.isCamera) {
+                            console.log('   → 중심점 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
                             
-                            cx = playerPos.x + centerPos.x;
-                            cy = playerPos.y + centerPos.y;
-                            cz = playerPos.z + centerPos.z;
-                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
-                            
-                            console.log(`🎯 좌표 변환 완료:`);
-                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
-                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
-                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
-                        } catch (error) {
-                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
-                            // 실패 시 원래 상대좌표 사용
-                            cx = centerPos.x;
-                            cy = centerPos.y;
-                            cz = centerPos.z;
-                            prefix = '~';
+                            try {
+                                const playerDirection = await new Promise((resolve) => {
+                                    const queryCommand = `querytarget "${executingPlayer}"`;
+                                    console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                    
+                                    const responseHandler = (message) => {
+                                        try {
+                                            const messageStr = message.toString();
+                                            console.log('📍 방향 조회 응답:', messageStr);
+                                            
+                                            const jsonData = JSON.parse(messageStr);
+                                            if (jsonData.body && jsonData.body.details) {
+                                                const details = JSON.parse(jsonData.body.details);
+                                                if (details && details[0] && details[0].yRot !== undefined) {
+                                                    const yaw = parseFloat(details[0].yRot);
+                                                    console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                    socket.off('message', responseHandler);
+                                                    resolve(yaw);
+                                                    return;
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                        }
+                                    };
+                                    
+                                    socket.on('message', responseHandler);
+                                    
+                                    setTimeout(() => {
+                                        socket.off('message', responseHandler);
+                                        console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                        resolve(0);
+                                    }, 1000);
+                                    
+                                    send(queryCommand);
+                                });
+                                
+                                // 카메라 좌표 변환 적용
+                                const convertedCoords = convertCameraPosition(centerPos.x, centerPos.y, centerPos.z, playerDirection);
+                                console.log('🎯 중심점 카메라 좌표 변환:', convertedCoords);
+                                
+                                cx = convertedCoords.x;
+                                cy = convertedCoords.y;
+                                cz = convertedCoords.z;
+                                prefix = '~';  // 카메라 위치는 상대 좌표로 처리
+                                
+                            } catch (error) {
+                                console.error('❌ 중심점 카메라 위치 처리 오류:', error);
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';  // 오류 시 상대 좌표로 처리
+                            }
+                        } else {
+                            try {
+                                console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                                const playerPos = await getPlayerPosition(executingPlayer);
+                                
+                                cx = playerPos.x + centerPos.x;
+                                cy = playerPos.y + centerPos.y;
+                                cz = playerPos.z + centerPos.z;
+                                prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                                
+                                console.log(`🎯 좌표 변환 완료:`);
+                                console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                                console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                                console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                            } catch (error) {
+                                console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                                // 실패 시 원래 상대좌표 사용
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';
+                            }
                         }
                     } else {
                         // 절대좌표인 경우 그대로 사용
@@ -1015,14 +1075,73 @@ async function start() {
                     
                     console.log('🔍 좌표 모드 확인:');
                     console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   centerPos.isCamera:', centerPos.isCamera);
                     console.log('   executingPlayer:', executingPlayer);
                     console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
                     
                     // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
                     if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
-                        try {
-                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
-                            const playerPos = await getPlayerPosition(executingPlayer);
+                        // 카메라 상대 위치 처리 확인
+                        if (centerPos.isCamera) {
+                            console.log('   → 중심점 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
+                            
+                            try {
+                                const playerDirection = await new Promise((resolve) => {
+                                    const queryCommand = `querytarget "${executingPlayer}"`;
+                                    console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                    
+                                    const responseHandler = (message) => {
+                                        try {
+                                            const messageStr = message.toString();
+                                            console.log('📍 방향 조회 응답:', messageStr);
+                                            
+                                            const jsonData = JSON.parse(messageStr);
+                                            if (jsonData.body && jsonData.body.details) {
+                                                const details = JSON.parse(jsonData.body.details);
+                                                if (details && details[0] && details[0].yRot !== undefined) {
+                                                    const yaw = parseFloat(details[0].yRot);
+                                                    console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                    socket.off('message', responseHandler);
+                                                    resolve(yaw);
+                                                    return;
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                        }
+                                    };
+                                    
+                                    socket.on('message', responseHandler);
+                                    
+                                    setTimeout(() => {
+                                        socket.off('message', responseHandler);
+                                        console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                        resolve(0);
+                                    }, 1000);
+                                    
+                                    send(queryCommand);
+                                });
+                                
+                                // 카메라 좌표 변환 적용
+                                const convertedCoords = convertCameraPosition(centerPos.x, centerPos.y, centerPos.z, playerDirection);
+                                console.log('🎯 중심점 카메라 좌표 변환:', convertedCoords);
+                                
+                                cx = convertedCoords.x;
+                                cy = convertedCoords.y;
+                                cz = convertedCoords.z;
+                                prefix = '~';  // 카메라 위치는 상대 좌표로 처리
+                                
+                            } catch (error) {
+                                console.error('❌ 중심점 카메라 위치 처리 오류:', error);
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';  // 오류 시 상대 좌표로 처리
+                            }
+                        } else {
+                            try {
+                                console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                                const playerPos = await getPlayerPosition(executingPlayer);
                             
                             cx = playerPos.x + centerPos.x;
                             cy = playerPos.y + centerPos.y;
@@ -1215,14 +1334,73 @@ async function start() {
                     
                     console.log('🔍 좌표 모드 확인:');
                     console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   centerPos.isCamera:', centerPos.isCamera);
                     console.log('   executingPlayer:', executingPlayer);
                     console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
                     
                     // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
                     if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
-                        try {
-                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
-                            const playerPos = await getPlayerPosition(executingPlayer);
+                        // 카메라 상대 위치 처리 확인
+                        if (centerPos.isCamera) {
+                            console.log('   → 중심점 카메라 상대 위치 처리 시작 - 플레이어 방향 조회 중...');
+                            
+                            try {
+                                const playerDirection = await new Promise((resolve) => {
+                                    const queryCommand = `querytarget "${executingPlayer}"`;
+                                    console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
+                                    
+                                    const responseHandler = (message) => {
+                                        try {
+                                            const messageStr = message.toString();
+                                            console.log('📍 방향 조회 응답:', messageStr);
+                                            
+                                            const jsonData = JSON.parse(messageStr);
+                                            if (jsonData.body && jsonData.body.details) {
+                                                const details = JSON.parse(jsonData.body.details);
+                                                if (details && details[0] && details[0].yRot !== undefined) {
+                                                    const yaw = parseFloat(details[0].yRot);
+                                                    console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                    socket.off('message', responseHandler);
+                                                    resolve(yaw);
+                                                    return;
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.log('❌ 방향 조회 파싱 오류:', error.message);
+                                        }
+                                    };
+                                    
+                                    socket.on('message', responseHandler);
+                                    
+                                    setTimeout(() => {
+                                        socket.off('message', responseHandler);
+                                        console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                        resolve(0);
+                                    }, 1000);
+                                    
+                                    send(queryCommand);
+                                });
+                                
+                                // 카메라 좌표 변환 적용
+                                const convertedCoords = convertCameraPosition(centerPos.x, centerPos.y, centerPos.z, playerDirection);
+                                console.log('🎯 중심점 카메라 좌표 변환:', convertedCoords);
+                                
+                                cx = convertedCoords.x;
+                                cy = convertedCoords.y;
+                                cz = convertedCoords.z;
+                                prefix = '~';  // 카메라 위치는 상대 좌표로 처리
+                                
+                            } catch (error) {
+                                console.error('❌ 중심점 카메라 위치 처리 오류:', error);
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';  // 오류 시 상대 좌표로 처리
+                            }
+                        } else {
+                            try {
+                                console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                                const playerPos = await getPlayerPosition(executingPlayer);
                             
                             cx = playerPos.x + centerPos.x;
                             cy = playerPos.y + centerPos.y;

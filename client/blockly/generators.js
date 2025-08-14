@@ -624,7 +624,7 @@ Blockly.JavaScript['create_circle'] = function(block) {
         
         console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
         
-        // 서버로 원 생성 요청 전송 (절대좌표)
+        // 서버로 원 생성 요청 전송
         if (socket && socket.connected) {
             socket.emit("createCircle", {
                 center: finalCenter,
@@ -634,7 +634,7 @@ Blockly.JavaScript['create_circle'] = function(block) {
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 원 모양 생성 요청 전송 완료 (최적화됨)');
+            console.log('✅ 원 모양 생성 요청 전송 완료');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
@@ -705,7 +705,7 @@ Blockly.JavaScript['create_sphere'] = function(block) {
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 공 모양 생성 요청 전송 완료 (최적화됨)');
+            console.log('✅ 공 모양 생성 요청 전송 완료');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
@@ -768,7 +768,7 @@ Blockly.JavaScript['create_hemisphere'] = function(block) {
                 blockType: blockType,
                 executingPlayer: executingPlayer
             });
-            console.log('✅ 반구 모양 생성 요청 전송 완료 (최적화됨)');
+            console.log('✅ 반구 모양 생성 요청 전송 완료');
         } else {
             console.error('❌ 소켓 연결이 되어있지 않음');
         }
