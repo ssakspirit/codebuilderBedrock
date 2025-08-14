@@ -1415,6 +1415,42 @@ Blockly.Blocks['create_sphere'] = {
     }
 };
 
+// 반구 모양 만들기 블록 정의
+Blockly.Blocks['create_hemisphere'] = {
+    init: function() {
+        this.appendValueInput('BLOCK_TYPE')
+            .setCheck(['String', 'BlockType'])
+            .appendField("반구 모양 만들기:");
+        this.appendValueInput('CENTER')
+            .setCheck('Position')
+            .appendField("중심");
+        this.appendValueInput('RADIUS')
+            .setCheck('Number')
+            .appendField("반지름");
+        this.appendDummyInput()
+            .appendField("방향")
+            .appendField(new Blockly.FieldDropdown([
+                ["x축 양의 방향", "x"],
+                ["x축 음의 방향", "-x"],
+                ["y축 양의 방향", "y"],
+                ["y축 음의 방향", "-y"],
+                ["z축 양의 방향", "z"],
+                ["z축 음의 방향", "-z"]
+            ]), "AXIS");
+        this.appendDummyInput()
+            .appendField("모드타입")
+            .appendField(new Blockly.FieldDropdown([
+                ["외곽선", "outline"],
+                ["채우기", "fill"]
+            ]), "MODE");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#ec7505');
+        this.setTooltip("지정된 중심점, 반지름, 방향으로 반구를 만듭니다");
+        this.setInputsInline(false); // 세로로 정렬
+    }
+};
+
 // 변수 블록 초기화 그림자 블록 추가
 const originalVariableInit = Blockly.Blocks['variables_set'].init;
 Blockly.Blocks['variables_set'].init = function() {

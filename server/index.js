@@ -904,6 +904,173 @@ async function start() {
                     console.log('✅ 공 모양 생성 완료');
                 });
 
+                // 반구 모양 생성 처리
+                clientSocket.on("createHemisphere", async (data) => {
+                    console.log('\n🌗 반구 모양 생성 요청 수신');
+                    console.log('  요청 데이터:', data);
+                    
+                    const { center, radius, axis, mode, blockType, executingPlayer } = data;
+                    
+                    if (!center || !radius || !axis || !mode || !blockType) {
+                        console.error('❌ 반구 생성 오류: 필수 데이터 누락', data);
+                        return;
+                    }
+                    
+                    const commands = [];
+                    const r = parseInt(radius);
+                    
+                    // center는 직접 객체로 전달됨
+                    const centerPos = center;
+                    
+                    let cx, cy, cz, prefix;
+                    
+                    console.log('🔍 좌표 모드 확인:');
+                    console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   executingPlayer:', executingPlayer);
+                    console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
+                    
+                    // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
+                    if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+                        try {
+                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                            const playerPos = await getPlayerPosition(executingPlayer);
+                            
+                            cx = playerPos.x + centerPos.x;
+                            cy = playerPos.y + centerPos.y;
+                            cz = playerPos.z + centerPos.z;
+                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                            
+                            console.log(`🎯 좌표 변환 완료:`);
+                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                        } catch (error) {
+                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                            // 실패 시 원래 상대좌표 사용
+                            cx = centerPos.x;
+                            cy = centerPos.y;
+                            cz = centerPos.z;
+                            prefix = '~';
+                        }
+                    } else {
+                        // 절대좌표인 경우 그대로 사용
+                        cx = centerPos.x;
+                        cy = centerPos.y;
+                        cz = centerPos.z;
+                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                    }
+                    
+                    // blockType에서 따옴표 제거
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
+                    
+                    console.log(`📊 반구 생성 정보:`);
+                    console.log(`   중심: (${cx}, ${cy}, ${cz})`);
+                    console.log(`   반지름: ${r}`);
+                    console.log(`   방향: ${axis}`);
+                    console.log(`   모드: ${mode}`);
+                    console.log(`   블록: ${cleanBlockType}`);
+                    
+                    // 최적화된 반구 생성 알고리즘 (1/4 반구 대칭성 활용)
+                    const quarterPoints = new Set();
+                    
+                    // 1/4 반구만 계산 (0 <= x, y, z <= r)
+                    for (let x = 0; x <= r; x++) {
+                        for (let y = 0; y <= r; y++) {
+                            for (let z = 0; z <= r; z++) {
+                                const distance = Math.sqrt(x * x + y * y + z * z);
+                                let shouldPlace = false;
+                                
+                                if (mode === 'fill') {
+                                    shouldPlace = distance <= r;
+                                } else {
+                                    shouldPlace = Math.abs(distance - r) < 0.5; // 반구 표면
+                                }
+                                
+                                if (shouldPlace) {
+                                    quarterPoints.add(`${x},${y},${z}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log(`🔄 1/4 반구 점 수: ${quarterPoints.size}개`);
+                    
+                    // 1/4 반구를 4개 사분면으로 대칭 확장
+                    const points = new Set();
+                    for (const pointStr of quarterPoints) {
+                        const [x, y, z] = pointStr.split(',').map(Number);
+                        
+                        // 4개 사분면 대칭
+                        const symmetries = [
+                            [x, y, z],      // 1사분면
+                            [-x, y, z],     // 2사분면
+                            [-x, -y, z],    // 3사분면
+                            [x, -y, z]      // 4사분면
+                        ];
+                        
+                        for (const [symX, symY, symZ] of symmetries) {
+                            let finalX, finalY, finalZ;
+                            
+                            // 선택된 축에 따라 좌표 변환
+                            switch(axis) {
+                                case "x":
+                                    finalX = cx + symZ; // z를 x로
+                                    finalY = cy + symY;
+                                    finalZ = cz + symX; // x를 z로
+                                    break;
+                                case "-x":
+                                    finalX = cx - symZ; // z를 -x로
+                                    finalY = cy + symY;
+                                    finalZ = cz + symX; // x를 z로
+                                    break;
+                                case "y":
+                                    finalX = cx + symX;
+                                    finalY = cy + symZ; // z를 y로
+                                    finalZ = cz + symY; // y를 z로
+                                    break;
+                                case "-y":
+                                    finalX = cx + symX;
+                                    finalY = cy - symZ; // z를 -y로
+                                    finalZ = cz + symY; // y를 z로
+                                    break;
+                                case "z":
+                                    finalX = cx + symX;
+                                    finalY = cy + symY;
+                                    finalZ = cz + symZ;
+                                    break;
+                                case "-z":
+                                    finalX = cx + symX;
+                                    finalY = cy + symY;
+                                    finalZ = cz - symZ;
+                                    break;
+                            }
+                            
+                            const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
+                            commands.push(command);
+                        }
+                    }
+                    
+                    console.log(`📦 생성된 블록 수: ${commands.length}개`);
+                    
+                    // 명령어들을 순차적으로 실행
+                    for (let i = 0; i < commands.length; i++) {
+                        const command = commands[i];
+                        
+                        // 통합 함수 사용
+                        const finalCommand = sendPlayerCommand(executingPlayer, command, '반구 생성');
+                        if (finalCommand) {
+                            send(finalCommand);
+                        }
+                        
+                        // 서버 부하 방지를 위한 짧은 지연
+                        if (i % 10 === 0 && i > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                    }
+                    
+                    console.log('✅ 반구 모양 생성 완료');
+                });
+
                 // 몹 소환 명령어 처리
                 clientSocket.on("summon", (data) => {
                     const command = typeof data === 'string' ? data : data.command;
