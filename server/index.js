@@ -642,6 +642,11 @@ async function start() {
                     
                     let cx, cy, cz, prefix;
                     
+                    console.log('🔍 좌표 모드 확인:');
+                    console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   executingPlayer:', executingPlayer);
+                    console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
+                    
                     // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
                     if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
                         try {
