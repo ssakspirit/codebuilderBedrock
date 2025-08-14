@@ -1142,23 +1142,24 @@ async function start() {
                             try {
                                 console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
                                 const playerPos = await getPlayerPosition(executingPlayer);
-                            
-                            cx = playerPos.x + centerPos.x;
-                            cy = playerPos.y + centerPos.y;
-                            cz = playerPos.z + centerPos.z;
-                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
-                            
-                            console.log(`🎯 좌표 변환 완료:`);
-                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
-                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
-                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
-                        } catch (error) {
-                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
-                            // 실패 시 원래 상대좌표 사용
-                            cx = centerPos.x;
-                            cy = centerPos.y;
-                            cz = centerPos.z;
-                            prefix = '~';
+                                
+                                cx = playerPos.x + centerPos.x;
+                                cy = playerPos.y + centerPos.y;
+                                cz = playerPos.z + centerPos.z;
+                                prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                                
+                                console.log(`🎯 좌표 변환 완료:`);
+                                console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                                console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                                console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                            } catch (error) {
+                                console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                                // 실패 시 원래 상대좌표 사용
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';
+                            }
                         }
                     } else {
                         // 절대좌표인 경우 그대로 사용
@@ -1401,23 +1402,24 @@ async function start() {
                             try {
                                 console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
                                 const playerPos = await getPlayerPosition(executingPlayer);
-                            
-                            cx = playerPos.x + centerPos.x;
-                            cy = playerPos.y + centerPos.y;
-                            cz = playerPos.z + centerPos.z;
-                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
-                            
-                            console.log(`🎯 좌표 변환 완료:`);
-                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
-                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
-                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
-                        } catch (error) {
-                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
-                            // 실패 시 원래 상대좌표 사용
-                            cx = centerPos.x;
-                            cy = centerPos.y;
-                            cz = centerPos.z;
-                            prefix = '~';
+                                
+                                cx = playerPos.x + centerPos.x;
+                                cy = playerPos.y + centerPos.y;
+                                cz = playerPos.z + centerPos.z;
+                                prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                                
+                                console.log(`🎯 좌표 변환 완료:`);
+                                console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                                console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                                console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                            } catch (error) {
+                                console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                                // 실패 시 원래 상대좌표 사용
+                                cx = centerPos.x;
+                                cy = centerPos.y;
+                                cz = centerPos.z;
+                                prefix = '~';
+                            }
                         }
                     } else {
                         // 절대좌표인 경우 그대로 사용
