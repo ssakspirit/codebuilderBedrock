@@ -608,8 +608,8 @@ async function start() {
                             console.log('------------------------');
                             send('gamerule sendcommandfeedback false');  // 명령어 피드백 끄기
                             
-                            // 채팅창 닫기 - 전체 서버에 적용
-                            send('/closechat @a');  // 모든 플레이어에게 채팅창 닫기
+                            // 채팅창 닫기 - Code Connection 명령어
+                            send('closechat');  // 웹소켓 연결된 클라이언트(호스트)에게 채팅창 닫기
                             
                             // 플레이어 정보와 함께 명령어 실행
                             commandData.socket.emit('executeCommands', { 
