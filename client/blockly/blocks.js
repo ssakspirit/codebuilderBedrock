@@ -814,6 +814,25 @@ Blockly.Blocks['facing_pos'] = {
     }
 };
 
+// 카메라 상대 위치 블록 정의
+Blockly.Blocks['camera_pos'] = {
+    init: function() {
+        this.appendValueInput("X")
+            .setCheck(["Number", "Variable"])
+            .appendField("카메라 상대 위치  오른쪽");
+        this.appendValueInput("Y")
+            .setCheck(["Number", "Variable"])
+            .appendField("위");
+        this.appendValueInput("Z")
+            .setCheck(["Number", "Variable"])
+            .appendField("앞");
+        this.setInputsInline(true);
+        this.setOutput(true, "Position");
+        this.setColour('#69b090');
+        this.setTooltip("플레이어가 바라보는 방향을 기준으로 한 상대 좌표입니다. 오른쪽(+)/왼쪽(-), 위(+)/아래(-), 앞(+)/뒤(-)");
+    }
+};
+
 // 블록 설치 명령 블록 정의
 Blockly.Blocks['set_block'] = {
     init: function() {

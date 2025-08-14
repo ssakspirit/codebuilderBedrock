@@ -103,6 +103,18 @@ Blockly.JavaScript['facing_pos'] = function(block) {
 // forBlock 방식도 지원
 Blockly.JavaScript.forBlock['facing_pos'] = Blockly.JavaScript['facing_pos'];
 
+// 카메라 상대 위치 블록 코드 생성기
+Blockly.JavaScript['camera_pos'] = function(block) {
+    const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const z = Blockly.JavaScript.valueToCode(block, 'Z', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+    const posObj = `{"x": Number(${x}), "y": Number(${y}), "z": Number(${z}), "isAbsolute": false, "isCamera": true}`;
+    return [`JSON.stringify(${posObj})`, Blockly.JavaScript.ORDER_ATOMIC];
+};
+
+// forBlock 방식도 지원
+Blockly.JavaScript.forBlock['camera_pos'] = Blockly.JavaScript['camera_pos'];
+
 // 에이전트 이동 코드 생성기
 Blockly.JavaScript['agent_move'] = function(block) {
     const direction = block.getFieldValue('DIRECTION');

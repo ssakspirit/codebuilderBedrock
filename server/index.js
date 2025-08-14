@@ -531,7 +531,22 @@ async function start() {
 
                 // 블록 설치 명령어 처리
                 clientSocket.on("setblock", (data) => {
-                    const prefix = data.isFacing ? '^' : (data.isAbsolute ? '' : '~');
+                    let prefix = '';
+                    
+                    if (data.isCamera) {
+                        // 카메라 상대 위치: 플레이어 바라보는 방향 기준
+                        prefix = '^';
+                    } else if (data.isFacing) {
+                        // 바라보는 방향 기준
+                        prefix = '^';
+                    } else if (data.isAbsolute) {
+                        // 절대 좌표
+                        prefix = '';
+                    } else {
+                        // 상대 좌표
+                        prefix = '~';
+                    }
+                    
                     const command = `setblock ${prefix}${data.x} ${prefix}${data.y} ${prefix}${data.z} ${data.blockType}`;
                     
                     // 통합 함수 사용
