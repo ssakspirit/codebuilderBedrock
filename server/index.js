@@ -575,6 +575,125 @@ async function start() {
                     }
                 });
 
+                // 원 모양 생성 처리
+                clientSocket.on("createCircle", async (data) => {
+                    console.log('\n🔴 원 모양 생성 요청 수신');
+                    console.log('  요청 데이터:', data);
+                    
+                    const { center, radius, direction, mode, blockType, executingPlayer } = data;
+                    
+                    if (!center || !radius || !direction || !mode || !blockType) {
+                        console.error('❌ 원 생성 오류: 필수 데이터 누락', data);
+                        return;
+                    }
+                    
+                    const commands = [];
+                    const r = parseInt(radius);
+                    const cx = center.x;
+                    const cy = center.y;
+                    const cz = center.z;
+                    const prefix = center.mode === 'relative' ? '~' : '';
+                    
+                    console.log(`📊 원 생성 정보:`);
+                    console.log(`   중심: (${cx}, ${cy}, ${cz})`);
+                    console.log(`   반지름: ${r}`);
+                    console.log(`   방향: ${direction}`);
+                    console.log(`   모드: ${mode}`);
+                    console.log(`   블록: ${blockType}`);
+                    
+                    // 원 생성 알고리즘
+                    if (direction === 'y') {
+                        // Y축 평면 (수평면)
+                        for (let x = -r; x <= r; x++) {
+                            for (let z = -r; z <= r; z++) {
+                                const distance = Math.sqrt(x * x + z * z);
+                                let shouldPlace = false;
+                                
+                                if (mode === 'fill') {
+                                    shouldPlace = distance <= r;
+                                } else {
+                                    shouldPlace = Math.abs(distance - r) < 0.7;
+                                }
+                                
+                                if (shouldPlace) {
+                                    const finalX = cx + x;
+                                    const finalY = cy;
+                                    const finalZ = cz + z;
+                                    
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    commands.push(command);
+                                }
+                            }
+                        }
+                    } else if (direction === 'x') {
+                        // X축 평면 (수직면)
+                        for (let y = -r; y <= r; y++) {
+                            for (let z = -r; z <= r; z++) {
+                                const distance = Math.sqrt(y * y + z * z);
+                                let shouldPlace = false;
+                                
+                                if (mode === 'fill') {
+                                    shouldPlace = distance <= r;
+                                } else {
+                                    shouldPlace = Math.abs(distance - r) < 0.7;
+                                }
+                                
+                                if (shouldPlace) {
+                                    const finalX = cx;
+                                    const finalY = cy + y;
+                                    const finalZ = cz + z;
+                                    
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    commands.push(command);
+                                }
+                            }
+                        }
+                    } else {
+                        // Z축 평면 (수직면)
+                        for (let x = -r; x <= r; x++) {
+                            for (let y = -r; y <= r; y++) {
+                                const distance = Math.sqrt(x * x + y * y);
+                                let shouldPlace = false;
+                                
+                                if (mode === 'fill') {
+                                    shouldPlace = distance <= r;
+                                } else {
+                                    shouldPlace = Math.abs(distance - r) < 0.7;
+                                }
+                                
+                                if (shouldPlace) {
+                                    const finalX = cx + x;
+                                    const finalY = cy + y;
+                                    const finalZ = cz;
+                                    
+                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${blockType}`;
+                                    commands.push(command);
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log(`📦 생성된 블록 수: ${commands.length}개`);
+                    
+                    // 명령어들을 순차적으로 실행
+                    for (let i = 0; i < commands.length; i++) {
+                        const command = commands[i];
+                        
+                        // 통합 함수 사용
+                        const finalCommand = sendPlayerCommand(executingPlayer, command, '원 생성');
+                        if (finalCommand) {
+                            send(finalCommand);
+                        }
+                        
+                        // 서버 부하 방지를 위한 짧은 지연
+                        if (i % 10 === 0 && i > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                    }
+                    
+                    console.log('✅ 원 모양 생성 완료');
+                });
+
                 // 몹 소환 명령어 처리
                 clientSocket.on("summon", (data) => {
                     const command = typeof data === 'string' ? data : data.command;

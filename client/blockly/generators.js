@@ -548,105 +548,23 @@ Blockly.JavaScript['create_circle'] = function(block) {
         const r = ${radius};
         const blockType = ${blockType};
         
-        console.log('🔴 원 모양 생성 시작');
+        console.log('🔴 원 모양 생성 요청');
         console.log('  중심:', centerPos);
         console.log('  반지름:', r);
         console.log('  방향:', '${direction}');
         console.log('  모드:', '${mode}');
+        console.log('  블록 타입:', blockType);
         
-        const commands = [];
+        // 서버로 원 생성 요청 전송
+        socket.emit("createCircle", {
+            center: centerPos,
+            radius: r,
+            direction: '${direction}',
+            mode: '${mode}',
+            blockType: blockType,
+            executingPlayer: executingPlayer
+        });
         
-        // 원 생성 알고리즘 (기하학적 접근법)
-        if ('${direction}' === 'y') {
-            // Y축 평면 (수평면)
-            for (let x = -r; x <= r; x++) {
-                for (let z = -r; z <= r; z++) {
-                    const distance = Math.sqrt(x * x + z * z);
-                    let shouldPlace = false;
-                    
-                    if ('${mode}' === 'fill') {
-                        shouldPlace = distance <= r;
-                    } else {
-                        shouldPlace = Math.abs(distance - r) < 0.7;
-                    }
-                    
-                    if (shouldPlace) {
-                        const finalX = centerPos.x + x;
-                        const finalY = centerPos.y;
-                        const finalZ = centerPos.z + z;
-                        
-                        const prefix = centerPos.mode === 'relative' ? '~' : '';
-                        const command = \`setblock \${prefix}\${finalX} \${prefix}\${finalY} \${prefix}\${finalZ} \${blockType}\`;
-                        commands.push(command);
-                    }
-                }
-            }
-        } else if ('${direction}' === 'x') {
-            // X축 평면 (수직면)
-            for (let y = -r; y <= r; y++) {
-                for (let z = -r; z <= r; z++) {
-                    const distance = Math.sqrt(y * y + z * z);
-                    let shouldPlace = false;
-                    
-                    if ('${mode}' === 'fill') {
-                        shouldPlace = distance <= r;
-                    } else {
-                        shouldPlace = Math.abs(distance - r) < 0.7;
-                    }
-                    
-                    if (shouldPlace) {
-                        const finalX = centerPos.x;
-                        const finalY = centerPos.y + y;
-                        const finalZ = centerPos.z + z;
-                        
-                        const prefix = centerPos.mode === 'relative' ? '~' : '';
-                        const command = \`setblock \${prefix}\${finalX} \${prefix}\${finalY} \${prefix}\${finalZ} \${blockType}\`;
-                        commands.push(command);
-                    }
-                }
-            }
-        } else {
-            // Z축 평면 (수직면)
-            for (let x = -r; x <= r; x++) {
-                for (let y = -r; y <= r; y++) {
-                    const distance = Math.sqrt(x * x + y * y);
-                    let shouldPlace = false;
-                    
-                    if ('${mode}' === 'fill') {
-                        shouldPlace = distance <= r;
-                    } else {
-                        shouldPlace = Math.abs(distance - r) < 0.7;
-                    }
-                    
-                    if (shouldPlace) {
-                        const finalX = centerPos.x + x;
-                        const finalY = centerPos.y + y;
-                        const finalZ = centerPos.z;
-                        
-                        const prefix = centerPos.mode === 'relative' ? '~' : '';
-                        const command = \`setblock \${prefix}\${finalX} \${prefix}\${finalY} \${prefix}\${finalZ} \${blockType}\`;
-                        commands.push(command);
-                    }
-                }
-            }
-        }
-        
-        console.log(\`📦 생성된 블록 수: \${commands.length}개\`);
-        
-        // 명령어들을 순차적으로 실행
-        for (let i = 0; i < commands.length; i++) {
-            const command = commands[i];
-            socket.emit("executeCommand", {
-                command: command,
-                executingPlayer: executingPlayer
-            });
-            
-            // 서버 부하 방지를 위한 짧은 지연
-            if (i % 50 === 0 && i > 0) {
-                await new Promise(resolve => setTimeout(resolve, 50));
-            }
-        }
-        
-        console.log('✅ 원 모양 생성 완료');
+        console.log('✅ 원 모양 생성 요청 전송 완료');
     })();\n`;
 };
