@@ -1389,6 +1389,31 @@ Blockly.Blocks['create_circle'] = {
     }
 };
 
+// 공 모양 만들기 블록 정의
+Blockly.Blocks['create_sphere'] = {
+    init: function() {
+        this.appendValueInput('BLOCK_TYPE')
+            .setCheck(['String', 'BlockType'])
+            .appendField("공 모양 만들기:");
+        this.appendValueInput('CENTER')
+            .setCheck('Position')
+            .appendField("중심");
+        this.appendValueInput('RADIUS')
+            .setCheck('Number')
+            .appendField("반지름");
+        this.appendDummyInput()
+            .appendField("모드타입")
+            .appendField(new Blockly.FieldDropdown([
+                ["외곽선", "outline"],
+                ["채우기", "fill"]
+            ]), "MODE");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#ec7505');
+        this.setTooltip("지정된 중심점과 반지름으로 3D 구를 만듭니다");
+    }
+};
+
 // 변수 블록 초기화 그림자 블록 추가
 const originalVariableInit = Blockly.Blocks['variables_set'].init;
 Blockly.Blocks['variables_set'].init = function() {

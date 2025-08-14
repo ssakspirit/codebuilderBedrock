@@ -683,75 +683,65 @@ async function start() {
                     console.log(`   모드: ${mode}`);
                     console.log(`   블록: ${cleanBlockType}`);
                     
-                    // 원 생성 알고리즘
-                    if (direction === 'y') {
-                        // Y축 평면 (수평면)
-                        for (let x = -r; x <= r; x++) {
-                            for (let z = -r; z <= r; z++) {
-                                const distance = Math.sqrt(x * x + z * z);
-                                let shouldPlace = false;
-                                
-                                if (mode === 'fill') {
-                                    shouldPlace = distance <= r;
-                                } else {
-                                    shouldPlace = Math.abs(distance - r) < 0.7;
-                                }
-                                
-                                if (shouldPlace) {
-                                    const finalX = cx + x;
-                                    const finalY = cy;
-                                    const finalZ = cz + z;
-                                    
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
-                                    commands.push(command);
-                                }
+                    // 최적화된 원 생성 알고리즘 (대칭성 활용)
+                    const quarterPoints = new Set();
+                    
+                    // 1/4 원만 계산 (0 <= x, y <= r)
+                    for (let x = 0; x <= r; x++) {
+                        for (let y = 0; y <= r; y++) {
+                            const distance = Math.sqrt(x * x + y * y);
+                            let shouldPlace = false;
+                            
+                            if (mode === 'fill') {
+                                shouldPlace = distance <= r;
+                            } else {
+                                shouldPlace = Math.abs(distance - r) < 0.5; // 더 정밀한 기준
+                            }
+                            
+                            if (shouldPlace) {
+                                quarterPoints.add(`${x},${y}`);
                             }
                         }
-                    } else if (direction === 'x') {
-                        // X축 평면 (수직면)
-                        for (let y = -r; y <= r; y++) {
-                            for (let z = -r; z <= r; z++) {
-                                const distance = Math.sqrt(y * y + z * z);
-                                let shouldPlace = false;
-                                
-                                if (mode === 'fill') {
-                                    shouldPlace = distance <= r;
-                                } else {
-                                    shouldPlace = Math.abs(distance - r) < 0.7;
-                                }
-                                
-                                if (shouldPlace) {
-                                    const finalX = cx;
-                                    const finalY = cy + y;
-                                    const finalZ = cz + z;
-                                    
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
-                                    commands.push(command);
-                                }
+                    }
+                    
+                    console.log(`🔄 1/4 원 점 수: ${quarterPoints.size}개`);
+                    
+                    // 1/4 원을 4개 사분면으로 대칭 확장
+                    const points = new Set();
+                    for (const pointStr of quarterPoints) {
+                        const [x, y] = pointStr.split(',').map(Number);
+                        
+                        // 4개 사분면 대칭
+                        const symmetries = [
+                            [x, y],      // 1사분면
+                            [-x, y],     // 2사분면
+                            [-x, -y],    // 3사분면
+                            [x, -y]      // 4사분면
+                        ];
+                        
+                        for (const [symX, symY] of symmetries) {
+                            let finalX, finalY, finalZ;
+                            
+                            // 방향에 따른 좌표 변환
+                            if (direction === 'y') {
+                                // Y축 평면 (수평면)
+                                finalX = cx + symX;
+                                finalY = cy;
+                                finalZ = cz + symY;
+                            } else if (direction === 'x') {
+                                // X축 평면 (수직면)
+                                finalX = cx;
+                                finalY = cy + symX;
+                                finalZ = cz + symY;
+                            } else {
+                                // Z축 평면 (수직면)
+                                finalX = cx + symX;
+                                finalY = cy + symY;
+                                finalZ = cz;
                             }
-                        }
-                    } else {
-                        // Z축 평면 (수직면)
-                        for (let x = -r; x <= r; x++) {
-                            for (let y = -r; y <= r; y++) {
-                                const distance = Math.sqrt(x * x + y * y);
-                                let shouldPlace = false;
-                                
-                                if (mode === 'fill') {
-                                    shouldPlace = distance <= r;
-                                } else {
-                                    shouldPlace = Math.abs(distance - r) < 0.7;
-                                }
-                                
-                                if (shouldPlace) {
-                                    const finalX = cx + x;
-                                    const finalY = cy + y;
-                                    const finalZ = cz;
-                                    
-                                    const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
-                                    commands.push(command);
-                                }
-                            }
+                            
+                            const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
+                            commands.push(command);
                         }
                     }
                     
@@ -774,6 +764,144 @@ async function start() {
                     }
                     
                     console.log('✅ 원 모양 생성 완료');
+                });
+
+                // 공 모양 생성 처리
+                clientSocket.on("createSphere", async (data) => {
+                    console.log('\n⚪ 공 모양 생성 요청 수신');
+                    console.log('  요청 데이터:', data);
+                    
+                    const { center, radius, mode, blockType, executingPlayer } = data;
+                    
+                    if (!center || !radius || !mode || !blockType) {
+                        console.error('❌ 구 생성 오류: 필수 데이터 누락', data);
+                        return;
+                    }
+                    
+                    const commands = [];
+                    const r = parseInt(radius);
+                    
+                    // center는 직접 객체로 전달됨
+                    const centerPos = center;
+                    
+                    let cx, cy, cz, prefix;
+                    
+                    console.log('🔍 좌표 모드 확인:');
+                    console.log('   centerPos.isAbsolute:', centerPos.isAbsolute);
+                    console.log('   executingPlayer:', executingPlayer);
+                    console.log('   조건 검사:', centerPos.isAbsolute === false, executingPlayer && executingPlayer !== 'Unknown');
+                    
+                    // 상대좌표인 경우 플레이어 위치를 기준으로 절대좌표로 변환
+                    if (centerPos.isAbsolute === false && executingPlayer && executingPlayer !== 'Unknown') {
+                        try {
+                            console.log('📍 상대좌표 감지 - 플레이어 위치 쿼리 중...');
+                            const playerPos = await getPlayerPosition(executingPlayer);
+                            
+                            cx = playerPos.x + centerPos.x;
+                            cy = playerPos.y + centerPos.y;
+                            cz = playerPos.z + centerPos.z;
+                            prefix = ''; // 절대좌표로 변환되었으므로 prefix 없음
+                            
+                            console.log(`🎯 좌표 변환 완료:`);
+                            console.log(`   플레이어 위치: (${playerPos.x}, ${playerPos.y}, ${playerPos.z})`);
+                            console.log(`   상대 오프셋: (${centerPos.x}, ${centerPos.y}, ${centerPos.z})`);
+                            console.log(`   절대 중심: (${cx}, ${cy}, ${cz})`);
+                        } catch (error) {
+                            console.error('❌ 플레이어 위치 쿼리 실패:', error.message);
+                            // 실패 시 원래 상대좌표 사용
+                            cx = centerPos.x;
+                            cy = centerPos.y;
+                            cz = centerPos.z;
+                            prefix = '~';
+                        }
+                    } else {
+                        // 절대좌표인 경우 그대로 사용
+                        cx = centerPos.x;
+                        cy = centerPos.y;
+                        cz = centerPos.z;
+                        prefix = centerPos.isAbsolute === false ? '~' : '';
+                    }
+                    
+                    // blockType에서 따옴표 제거
+                    const cleanBlockType = blockType.replace(/['"]/g, '');
+                    
+                    console.log(`📊 구 생성 정보:`);
+                    console.log(`   중심: (${cx}, ${cy}, ${cz})`);
+                    console.log(`   반지름: ${r}`);
+                    console.log(`   모드: ${mode}`);
+                    console.log(`   블록: ${cleanBlockType}`);
+                    
+                    // 최적화된 구 생성 알고리즘 (1/8 구 대칭성 활용)
+                    const eighthPoints = new Set();
+                    
+                    // 1/8 구만 계산 (0 <= x, y, z <= r)
+                    for (let x = 0; x <= r; x++) {
+                        for (let y = 0; y <= r; y++) {
+                            for (let z = 0; z <= r; z++) {
+                                const distance = Math.sqrt(x * x + y * y + z * z);
+                                let shouldPlace = false;
+                                
+                                if (mode === 'fill') {
+                                    shouldPlace = distance <= r;
+                                } else {
+                                    shouldPlace = Math.abs(distance - r) < 0.5; // 구 표면
+                                }
+                                
+                                if (shouldPlace) {
+                                    eighthPoints.add(`${x},${y},${z}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log(`🔄 1/8 구 점 수: ${eighthPoints.size}개`);
+                    
+                    // 1/8 구를 8개 팔분면으로 대칭 확장
+                    const points = new Set();
+                    for (const pointStr of eighthPoints) {
+                        const [x, y, z] = pointStr.split(',').map(Number);
+                        
+                        // 8개 팔분면 대칭
+                        const symmetries = [
+                            [x, y, z],      // 1팔분면
+                            [-x, y, z],     // 2팔분면
+                            [-x, -y, z],    // 3팔분면
+                            [x, -y, z],     // 4팔분면
+                            [x, y, -z],     // 5팔분면
+                            [-x, y, -z],    // 6팔분면
+                            [-x, -y, -z],   // 7팔분면
+                            [x, -y, -z]     // 8팔분면
+                        ];
+                        
+                        for (const [symX, symY, symZ] of symmetries) {
+                            const finalX = cx + symX;
+                            const finalY = cy + symY;
+                            const finalZ = cz + symZ;
+                            
+                            const command = `setblock ${prefix}${finalX} ${prefix}${finalY} ${prefix}${finalZ} ${cleanBlockType}`;
+                            commands.push(command);
+                        }
+                    }
+                    
+                    console.log(`📦 생성된 블록 수: ${commands.length}개`);
+                    
+                    // 명령어들을 순차적으로 실행
+                    for (let i = 0; i < commands.length; i++) {
+                        const command = commands[i];
+                        
+                        // 통합 함수 사용
+                        const finalCommand = sendPlayerCommand(executingPlayer, command, '구 생성');
+                        if (finalCommand) {
+                            send(finalCommand);
+                        }
+                        
+                        // 서버 부하 방지를 위한 짧은 지연
+                        if (i % 10 === 0 && i > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                    }
+                    
+                    console.log('✅ 공 모양 생성 완료');
                 });
 
                 // 몹 소환 명령어 처리

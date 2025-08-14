@@ -573,3 +573,41 @@ Blockly.JavaScript['create_circle'] = function(block) {
         }
     })();\n`;
 };
+
+// 공 모양 만들기 코드 생성기
+Blockly.JavaScript['create_sphere'] = function(block) {
+    const blockType = Blockly.JavaScript.valueToCode(block, 'BLOCK_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"stone"';
+    const center = Blockly.JavaScript.valueToCode(block, 'CENTER', Blockly.JavaScript.ORDER_ATOMIC);
+    const radius = Blockly.JavaScript.valueToCode(block, 'RADIUS', Blockly.JavaScript.ORDER_ATOMIC) || '5';
+    const mode = block.getFieldValue('MODE');
+
+    return `
+    (async () => {
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
+        const centerPos = JSON.parse(${center});
+        const r = ${radius};
+        const blockType = ${blockType};
+        
+        console.log('⚪ 공 모양 생성 요청');
+        console.log('  중심:', centerPos);
+        console.log('  반지름:', r);
+        console.log('  모드:', '${mode}');
+        console.log('  블록 타입:', blockType);
+        console.log('  실행 플레이어:', executingPlayer);
+        console.log('  소켓 연결 상태:', socket ? socket.connected : 'socket 없음');
+        
+        // 서버로 구 생성 요청 전송
+        if (socket && socket.connected) {
+            socket.emit("createSphere", {
+                center: centerPos,
+                radius: r,
+                mode: '${mode}',
+                blockType: blockType,
+                executingPlayer: executingPlayer
+            });
+            console.log('✅ 공 모양 생성 요청 전송 완료');
+        } else {
+            console.error('❌ 소켓 연결이 되어있지 않음');
+        }
+    })();\n`;
+};
