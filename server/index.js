@@ -572,15 +572,26 @@ async function start() {
                         case 'west': facingX = -1; facingY = 0; facingZ = 0; break;
                     }
                     
-                    // 절대좌표인 경우 ~ 기호를 제거
-                    const tilde = (data.isAbsolute && !data.isCamera) ? '' : '~';
+                    // 좌표 기호 결정
+                    let coordPrefix;
+                    if (data.isFacing || data.isLocal) {
+                        coordPrefix = '^';  // 바라보는 방향 위치는 ^ 사용
+                        console.log('   → ^ 좌표 사용 (바라보는 방향 위치)');
+                    } else if (data.isCamera) {
+                        coordPrefix = '~';  // 카메라 위치는 ~ 사용 (상대 좌표)
+                        console.log('   → ~ 좌표 사용 (카메라 상대 위치)');
+                    } else {
+                        coordPrefix = data.isAbsolute ? '' : '~';  // 절대/상대 좌표
+                        console.log(`   → ${coordPrefix || '절대'} 좌표 사용`);
+                    }
+                    
                     const facingCoord = `~${facingX} ~${facingY} ~${facingZ}`;
                     
-                    const tpCommand = `agent tp ${tilde}${finalX} ${tilde}${finalY} ${tilde}${finalZ} facing ${facingCoord}`;
+                    const tpCommand = `agent tp ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ} facing ${facingCoord}`;
                     console.log('🤖 에이전트 텔레포트 명령어:', tpCommand);
                     
                     send(tpCommand);
-                    console.log(`🎯 에이전트 이동: ${tilde}${finalX} ${tilde}${finalY} ${tilde}${finalZ}, 방향: ${data.facing}`);
+                    console.log(`🎯 에이전트 이동: ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ}, 방향: ${data.facing}`);
                 });
 
                 clientSocket.on("till", (direction) => {
