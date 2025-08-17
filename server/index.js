@@ -995,7 +995,7 @@ async function start() {
                                         console.log('⏰ 방향 조회 타임아웃 (블록 탐지) - 기본값 0 사용');
                                         resolve(0);
                                     }
-                                }, 1000); // 타임아웃을 1초로 줄임
+                                }, 500); // 타임아웃을 0.5초로 줄임
                                 
                                 // gamerule sendcommandfeedback를 잠시 켜서 응답을 받을 수 있도록 함
                                 send('gamerule sendcommandfeedback true');
@@ -1047,9 +1047,9 @@ async function start() {
                                                 setTimeout(() => {
                                                     send('gamerule sendcommandfeedback false');
                                                 }, 100);
-                                            } else if (cameraDetectResponseCount >= 3) {
-                                                // 3번 이상 응답이 왔는데도 에러가 없으면 성공
-                                                console.log('🔍 카메라 블록 탐지 결과: 블록 존재 (응답 3회)');
+                                            } else if (cameraDetectResponseCount >= 2) {
+                                                // 2번 이상 응답이 왔는데도 에러가 없으면 성공
+                                                console.log('🔍 카메라 블록 탐지 결과: 블록 존재 (응답 2회)');
                                                 cameraDetectProcessed = true;
                                                 socket.off('message', cameraDetectHandler);
                                                 clientSocket.emit('blockDetectResult', true);
@@ -1078,7 +1078,7 @@ async function start() {
                                             send('gamerule sendcommandfeedback false');
                                         }, 100);
                                     }
-                                }, 1500); // 블록 탐지 타임아웃을 1.5초로 줄임
+                                }, 800); // 블록 탐지 타임아웃을 0.8초로 줄임
                                 
                                 // 명령어 실행
                                 send(playerCommand);
