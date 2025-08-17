@@ -1009,6 +1009,8 @@ async function start() {
                             
                         } catch (error) {
                             console.error('❌ 카메라 위치 처리 오류 (블록 탐지):', error);
+                            // 오류 시에도 일반 처리 로직 건너뛰기
+                            return;
                         }
                     }
                     
