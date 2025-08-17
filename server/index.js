@@ -994,16 +994,61 @@ async function start() {
                             const playerCommand = sendPlayerCommand(executingPlayer, cameraCommand, '카메라 블록 탐지');
                             
                             if (playerCommand) {
-                                // 블록 탐지 상태 설정
-                                pendingBlockDetect = true;
-                                blockDetectResponseCount = 0;
+                                // 카메라 블록 탐지 전용 처리
+                                console.log('🔍 카메라 블록 탐지 실행 - 전용 처리');
                                 
-                                // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
-                                send('gamerule sendcommandfeedback true');
+                                let cameraDetectResponseCount = 0;
+                                let cameraDetectProcessed = false;
+                                
+                                // 전용 리스너 설정
+                                const cameraDetectHandler = (message) => {
+                                    try {
+                                        if (cameraDetectProcessed) return;
+                                        
+                                        const messageStr = message.toString();
+                                        const jsonData = JSON.parse(messageStr);
+                                        
+                                        if (jsonData.header && jsonData.header.messagePurpose === 'commandResponse') {
+                                            const statusCode = jsonData.body.statusCode;
+                                            cameraDetectResponseCount++;
+                                            
+                                            console.log('🔍 카메라 탐지 응답 #' + cameraDetectResponseCount + ', 상태코드:', statusCode);
+                                            
+                                            // testforblock 실제 응답 (상태 코드가 0이 아닌 경우)
+                                            if (statusCode !== 0) {
+                                                // 블록이 없거나 다른 블록
+                                                console.log('🔍 카메라 블록 탐지 결과: 블록 없음 (상태코드:', statusCode, ')');
+                                                cameraDetectProcessed = true;
+                                                socket.off('message', cameraDetectHandler);
+                                                clientSocket.emit('blockDetectResult', false);
+                                            } else if (cameraDetectResponseCount >= 5) {
+                                                // 5번 이상 응답이 왔는데도 에러가 없으면 성공
+                                                console.log('🔍 카메라 블록 탐지 결과: 블록 존재 (타임아웃)');
+                                                cameraDetectProcessed = true;
+                                                socket.off('message', cameraDetectHandler);
+                                                clientSocket.emit('blockDetectResult', true);
+                                            }
+                                        }
+                                    } catch (error) {
+                                        console.log('❌ 카메라 블록 탐지 응답 파싱 오류:', error.message);
+                                    }
+                                };
+                                
+                                socket.on('message', cameraDetectHandler);
+                                
+                                // 타임아웃 설정 (더 길게 설정)
                                 setTimeout(() => {
-                                    send(playerCommand);
-                                    console.log('🔍 카메라 블록 탐지 명령어 전송:', playerCommand);
-                                }, 50);
+                                    if (!cameraDetectProcessed) {
+                                        cameraDetectProcessed = true;
+                                        socket.off('message', cameraDetectHandler);
+                                        console.log('🔍 카메라 블록 탐지 타임아웃 - 성공으로 간주');
+                                        clientSocket.emit('blockDetectResult', true);
+                                    }
+                                }, 3000);
+                                
+                                // 명령어 실행
+                                send(playerCommand);
+                                console.log('🔍 카메라 블록 탐지 명령어 전송:', playerCommand);
                             }
                             return; // 일반 처리 로직 건너뛰기
                             
