@@ -946,12 +946,16 @@ async function start() {
                         
                         try {
                             // 플레이어 방향 정보 조회
-                            const playerDirection = await new Promise((resolve) => {
+                            const playerDirection = await new Promise((resolve, reject) => {
                                 const queryCommand = `querytarget "${executingPlayer}"`;
                                 console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
                                 
+                                let responseReceived = false;
+                                
                                 const responseHandler = (message) => {
                                     try {
+                                        if (responseReceived) return;
+                                        
                                         const messageStr = message.toString();
                                         console.log('📍 방향 조회 응답:', messageStr);
                                         
@@ -961,10 +965,21 @@ async function start() {
                                             if (details && details[0] && details[0].yRot !== undefined) {
                                                 const yaw = parseFloat(details[0].yRot);
                                                 console.log('🧭 플레이어 방향 (yaw):', yaw);
+                                                responseReceived = true;
                                                 socket.off('message', responseHandler);
                                                 resolve(yaw);
                                                 return;
                                             }
+                                        }
+                                        
+                                        // querytarget 응답이지만 details가 없는 경우
+                                        if (jsonData.header && jsonData.header.messagePurpose === 'commandResponse' && 
+                                            jsonData.body && jsonData.body.statusMessage && 
+                                            jsonData.body.statusMessage.includes('querytarget')) {
+                                            console.log('🔍 querytarget 응답 감지했지만 details 없음 - 기본값 0 사용');
+                                            responseReceived = true;
+                                            socket.off('message', responseHandler);
+                                            resolve(0);
                                         }
                                     } catch (error) {
                                         console.log('❌ 방향 조회 파싱 오류:', error.message);
@@ -973,13 +988,20 @@ async function start() {
                                 
                                 socket.on('message', responseHandler);
                                 
-                                setTimeout(() => {
-                                    socket.off('message', responseHandler);
-                                    console.log('⏰ 방향 조회 타임아웃 (블록 탐지) - 기본값 0 사용');
-                                    resolve(0);
-                                }, 3000);
+                                const timeout = setTimeout(() => {
+                                    if (!responseReceived) {
+                                        responseReceived = true;
+                                        socket.off('message', responseHandler);
+                                        console.log('⏰ 방향 조회 타임아웃 (블록 탐지) - 기본값 0 사용');
+                                        resolve(0);
+                                    }
+                                }, 2000); // 타임아웃을 2초로 줄임
                                 
-                                send(queryCommand);
+                                // gamerule sendcommandfeedback를 잠시 켜서 응답을 받을 수 있도록 함
+                                send('gamerule sendcommandfeedback true');
+                                setTimeout(() => {
+                                    send(queryCommand);
+                                }, 50);
                             });
                             
                             // 방향 기반 좌표 변환
@@ -1021,12 +1043,20 @@ async function start() {
                                                 cameraDetectProcessed = true;
                                                 socket.off('message', cameraDetectHandler);
                                                 clientSocket.emit('blockDetectResult', false);
+                                                // 명령어 피드백 끄기
+                                                setTimeout(() => {
+                                                    send('gamerule sendcommandfeedback false');
+                                                }, 100);
                                             } else if (cameraDetectResponseCount >= 5) {
                                                 // 5번 이상 응답이 왔는데도 에러가 없으면 성공
                                                 console.log('🔍 카메라 블록 탐지 결과: 블록 존재 (타임아웃)');
                                                 cameraDetectProcessed = true;
                                                 socket.off('message', cameraDetectHandler);
                                                 clientSocket.emit('blockDetectResult', true);
+                                                // 명령어 피드백 끄기
+                                                setTimeout(() => {
+                                                    send('gamerule sendcommandfeedback false');
+                                                }, 100);
                                             }
                                         }
                                     } catch (error) {
@@ -1043,6 +1073,10 @@ async function start() {
                                         socket.off('message', cameraDetectHandler);
                                         console.log('🔍 카메라 블록 탐지 타임아웃 - 성공으로 간주');
                                         clientSocket.emit('blockDetectResult', true);
+                                        // 명령어 피드백 끄기
+                                        setTimeout(() => {
+                                            send('gamerule sendcommandfeedback false');
+                                        }, 100);
                                     }
                                 }, 3000);
                                 
