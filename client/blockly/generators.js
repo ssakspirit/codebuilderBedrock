@@ -536,6 +536,9 @@ Blockly.JavaScript['block_detect'] = function(block) {
         console.log('🔍 명령어:', command);
         
         return new Promise(resolve => {
+            // 기존 blockDetectResult 리스너들을 모두 제거
+            socket.off('blockDetectResult');
+            
             // 서버에서 블록 탐지 결과를 받는 리스너 설정
             const resultListener = (result) => {
                 console.log('🔍 블록 탐지 결과 수신:', result);
