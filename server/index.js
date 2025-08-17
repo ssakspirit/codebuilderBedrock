@@ -495,9 +495,6 @@ async function start() {
                     let finalX = data.x;
                     let finalY = data.y;
                     let finalZ = data.z;
-                    let facingX = 0;
-                    let facingY = 0;
-                    let facingZ = 0;
                     
                     // 위치 좌표 카메라 처리
                     if (data.isCamera) {
@@ -564,13 +561,7 @@ async function start() {
                         finalZ = data.z;
                     }
                     
-                    // 방향에 따른 facing 좌표 설정
-                    switch(data.facing) {
-                        case 'north': facingX = 0; facingY = 0; facingZ = -1; break;
-                        case 'south': facingX = 0; facingY = 0; facingZ = 1; break;
-                        case 'east': facingX = 1; facingY = 0; facingZ = 0; break;
-                        case 'west': facingX = -1; facingY = 0; facingZ = 0; break;
-                    }
+                    // 바라보는 방향은 data.facing을 직접 사용
                     
                     // 좌표 기호 결정
                     let coordPrefix;
@@ -585,9 +576,7 @@ async function start() {
                         console.log(`   → ${coordPrefix || '절대'} 좌표 사용`);
                     }
                     
-                    const facingCoord = `~${facingX} ~${facingY} ~${facingZ}`;
-                    
-                    const tpCommand = `agent tp ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ} facing ${facingCoord}`;
+                    const tpCommand = `agent tp ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ} facing ${data.facing}`;
                     console.log('🤖 에이전트 텔레포트 명령어:', tpCommand);
                     
                     send(tpCommand);
