@@ -940,11 +940,12 @@ async function start() {
                     const executingPlayer = data.executingPlayer;
                     const pos = data.position;
                     
-                    // 카메라 위치 처리 (플레이어 방향 기반 변환)
+                    // 카메라 위치 처리 (블록 설치와 동일한 방식)
                     if (pos && pos.isCamera) {
                         console.log('   → 카메라 상대 위치 처리 (블록 탐지) - 플레이어 방향 조회 중...');
                         
                         try {
+                            // 플레이어 방향 정보 조회
                             const playerDirection = await new Promise((resolve) => {
                                 const queryCommand = `querytarget "${executingPlayer}"`;
                                 console.log('🔍 플레이어 방향 조회 명령어:', queryCommand);
@@ -981,19 +982,33 @@ async function start() {
                                 send(queryCommand);
                             });
                             
+                            // 방향 기반 좌표 변환
                             const convertedCoords = convertCameraPosition(pos.x, pos.y, pos.z, playerDirection);
-                            console.log('🎯 카메라 좌표 변환 (블록 탐지):', convertedCoords);
+                            console.log('🔄 좌표 변환 결과 (블록 탐지):', convertedCoords);
                             
-                            // 변환된 좌표로 명령어 재구성
-                            const coordPrefix = '~';
-                            finalCommand = `testforblock ${coordPrefix}${convertedCoords.x} ${coordPrefix}${convertedCoords.y} ${coordPrefix}${convertedCoords.z} ${data.blockType}`;
-                            console.log('   → 변환된 명령어:', finalCommand);
+                            // 변환된 좌표로 명령어 생성
+                            const cameraCommand = `testforblock ~${convertedCoords.x} ~${convertedCoords.y} ~${convertedCoords.z} ${data.blockType}`;
+                            console.log('   → 카메라 변환 명령어:', cameraCommand);
+                            
+                            // 카메라 처리된 명령어로 블록 탐지 실행
+                            const playerCommand = sendPlayerCommand(executingPlayer, cameraCommand, '카메라 블록 탐지');
+                            
+                            if (playerCommand) {
+                                // 블록 탐지 상태 설정
+                                pendingBlockDetect = true;
+                                blockDetectResponseCount = 0;
+                                
+                                // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
+                                send('gamerule sendcommandfeedback true');
+                                setTimeout(() => {
+                                    send(playerCommand);
+                                    console.log('🔍 카메라 블록 탐지 명령어 전송:', playerCommand);
+                                }, 50);
+                            }
+                            return; // 일반 처리 로직 건너뛰기
                             
                         } catch (error) {
                             console.error('❌ 카메라 위치 처리 오류 (블록 탐지):', error);
-                            // 오류 시 기본 상대좌표로 처리
-                            const coordPrefix = '~';
-                            finalCommand = `testforblock ${coordPrefix}${pos.x} ${coordPrefix}${pos.y} ${coordPrefix}${pos.z} ${data.blockType}`;
                         }
                     }
                     
