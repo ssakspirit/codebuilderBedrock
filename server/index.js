@@ -534,10 +534,32 @@ async function start() {
                         console.log(`   → ${coordPrefix || '절대'} 좌표 사용`);
                     }
                     
-                    const tpCommand = `agent tp ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ} facing ${data.facing}`;
+                    // 먼저 위치 텔레포트 (facing 파라미터 없이)
+                    const tpCommand = `agent tp ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ}`;
                     console.log('🤖 에이전트 텔레포트 명령어:', tpCommand);
                     
                     send(tpCommand);
+                    
+                    // 바라보는 방향 설정 (기존 회전 명령어 사용)
+                    setTimeout(() => {
+                        // 현재 방향에서 목표 방향으로 회전하는 로직
+                        // 간단하게 목표 방향에 따라 고정 회전 수행
+                        const rotationMap = {
+                            'north': [], // 기본 방향이라고 가정
+                            'east': ['agent turn right'],
+                            'south': ['agent turn right', 'agent turn right'], 
+                            'west': ['agent turn left']
+                        };
+                        
+                        const rotations = rotationMap[data.facing];
+                        if (rotations) {
+                            console.log(`🧭 에이전트 방향 설정: ${data.facing} (${rotations.length}번 회전)`);
+                            rotations.forEach((cmd, index) => {
+                                setTimeout(() => send(cmd), index * 50);
+                            });
+                        }
+                    }, 100); // 텔레포트 후 약간의 지연
+                    
                     console.log(`🎯 에이전트 이동: ${coordPrefix}${finalX} ${coordPrefix}${finalY} ${coordPrefix}${finalZ}, 방향: ${data.facing}`);
                 });
 
