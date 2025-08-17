@@ -975,9 +975,9 @@ async function start() {
                                 
                                 setTimeout(() => {
                                     socket.off('message', responseHandler);
-                                    console.log('⏰ 방향 조회 타임아웃 - 기본값 0 사용');
+                                    console.log('⏰ 방향 조회 타임아웃 (블록 탐지) - 기본값 0 사용');
                                     resolve(0);
-                                }, 1000);
+                                }, 3000);
                                 
                                 send(queryCommand);
                             });
