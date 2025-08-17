@@ -214,10 +214,8 @@ Blockly.JavaScript['agent_tp'] = function(block) {
 // 에이전트 텔레포트 위치 코드 생성기
 Blockly.JavaScript['agent_tp_pos'] = function(block) {
     const position = Blockly.JavaScript.valueToCode(block, 'POSITION', Blockly.JavaScript.ORDER_ATOMIC);
-    const facing = block.getFieldValue('FACING');
     
     console.log('생성된 위치 코드:', position);
-    console.log('바라보는 방향:', facing);
     
     if (!position) {
         console.log('위치 정보가 없음, 기본 텔레포트 실행');
@@ -234,7 +232,6 @@ Blockly.JavaScript['agent_tp_pos'] = function(block) {
             x: pos.x, 
             y: pos.y, 
             z: pos.z, 
-            facing: "${facing}",
             isAbsolute: pos.isAbsolute,
             isCamera: pos.isCamera || false,
             isLocal: pos.isLocal || false,

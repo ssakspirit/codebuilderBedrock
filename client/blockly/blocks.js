@@ -1195,18 +1195,10 @@ Blockly.Blocks['agent_tp_pos'] = {
         this.appendValueInput("POSITION")
             .setCheck("Position")
             .appendField("에이전트가 텔레포트:");
-        this.appendDummyInput()
-            .appendField("바라보는 방향")
-            .appendField(new Blockly.FieldDropdown([
-                ["동쪽(+x)", "east"],
-                ["서쪽(-x)", "west"],
-                ["남쪽(+z)", "south"],
-                ["북쪽(-z)", "north"]
-            ]), "FACING");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setColour('#D83B01');
-        this.setTooltip("에이전트를 지정된 상대 좌표로 이동시키고 특정 방향을 보게 합니다");
+        this.setTooltip("에이전트를 지정된 좌표로 이동시킵니다");
         this.setStyle('agent_blocks');
     }
 };
