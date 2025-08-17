@@ -508,11 +508,32 @@ Blockly.JavaScript['block_detect'] = function(block) {
     const blockType = Blockly.JavaScript.valueToCode(block, 'BLOCK_TYPE', Blockly.JavaScript.ORDER_ATOMIC) || '"stone"';
     
     const code = `(await (async () => {
+        const executingPlayer = window.currentExecutingPlayer || 'Unknown';
         const pos = JSON.parse(${position});
-        const tilde = pos.isAbsolute ? '' : '~';
-        const command = \`testforblock \${tilde}\${pos.x} \${tilde}\${pos.y} \${tilde}\${pos.z} \${${blockType}}\`;
         
-        console.log('🔍 블록 탐지 시작:', command);
+        console.log('🔍 블록 탐지 시작');
+        console.log('  위치 정보:', pos);
+        console.log('  실행 플레이어:', executingPlayer);
+        
+        // 좌표 접두사 결정
+        let coordPrefix;
+        if (pos.isFacing || pos.isLocal) {
+            coordPrefix = '^';
+            console.log('  → ^ 좌표 사용 (바라보는 방향 위치)');
+        } else if (pos.isCamera) {
+            // 카메라 위치는 서버에서 처리하도록 정보 전달
+            coordPrefix = '~';
+            console.log('  → 카메라 상대 위치 감지 - 서버로 전달');
+        } else if (pos.isAbsolute) {
+            coordPrefix = '';
+            console.log('  → 절대 좌표 사용');
+        } else {
+            coordPrefix = '~';
+            console.log('  → ~ 좌표 사용 (상대 좌표)');
+        }
+        
+        const command = \`testforblock \${coordPrefix}\${pos.x} \${coordPrefix}\${pos.y} \${coordPrefix}\${pos.z} \${${blockType}}\`;
+        console.log('🔍 명령어:', command);
         
         return new Promise(resolve => {
             // 서버에서 블록 탐지 결과를 받는 리스너 설정
@@ -523,11 +544,12 @@ Blockly.JavaScript['block_detect'] = function(block) {
             };
             socket.on('blockDetectResult', resultListener);
             
-            // 명령어 실행
+            // 명령어 실행 (위치 정보도 함께 전달)
             socket.emit("blockDetect", {
                 command: command,
                 position: pos,
-                blockType: ${blockType}
+                blockType: ${blockType},
+                executingPlayer: executingPlayer
             });
             
             // 타임아웃 설정 (3초 후 실패로 간주)

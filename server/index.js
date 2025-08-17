@@ -886,14 +886,29 @@ async function start() {
                 });
 
                 // 블록 탐지 명령어 처리
-                clientSocket.on("blockDetect", (data) => {
-                    const command = data.command;
+                clientSocket.on("blockDetect", async (data) => {
+                    console.log('🔍 블록 탐지 데이터 디버깅:');
+                    console.log('   data:', JSON.stringify(data, null, 2));
+                    
+                    let finalCommand = data.command;
                     const executingPlayer = data.executingPlayer;
+                    const pos = data.position;
+                    
+                    // 카메라 위치 처리 (간소화 - 일반 상대좌표로 처리)
+                    if (pos && pos.isCamera) {
+                        console.log('   → 카메라 상대 위치 처리 (블록 탐지)');
+                        console.log('   → 카메라 좌표는 일반 상대좌표로 처리됩니다');
+                        
+                        // 카메라 좌표를 일반 상대좌표로 재구성
+                        const coordPrefix = '~';
+                        finalCommand = `testforblock ${coordPrefix}${pos.x} ${coordPrefix}${pos.y} ${coordPrefix}${pos.z} ${data.blockType}`;
+                        console.log('   → 수정된 명령어:', finalCommand);
+                    }
                     
                     // 통합 함수로 최종 명령어 생성
-                    const finalCommand = sendPlayerCommand(executingPlayer, command, '블록 탐지');
+                    const playerCommand = sendPlayerCommand(executingPlayer, finalCommand, '블록 탐지');
                     
-                    if (finalCommand) {
+                    if (playerCommand) {
                         // 블록 탐지 상태 설정
                         pendingBlockDetect = true;
                         blockDetectResponseCount = 0;
@@ -901,8 +916,8 @@ async function start() {
                         // 명령어 피드백을 잠시 켜서 결과를 받을 수 있도록 함
                         send('gamerule sendcommandfeedback true');
                         setTimeout(() => {
-                            send(finalCommand);
-                            console.log('🔍 블록 탐지 명령어 전송:', finalCommand);
+                            send(playerCommand);
+                            console.log('🔍 블록 탐지 명령어 전송:', playerCommand);
                         }, 50);
                     }
                 });
