@@ -136,16 +136,12 @@
 </head>
 <body>
     <div class="header">
-        <div class="title">🎮 Bedrock Agent</div>
+        <div class="title">🎮 Bedrock CodeBuilder</div>
         <div class="subtitle">Minecraft Bedrock CodeBuilder created by SteveCoding</div>
     </div>
     
     <div class="status-indicator">
         <div class="status-text" id="status-text">🔄 서버 상태 확인 중...</div>
-    </div>
-    
-    <div class="nav-links">
-        <button class="nav-btn" onclick="openCodeBuilder()">🧩 코드 빌더 열기</button>
     </div>
     
     <div class="connection-info">
@@ -154,13 +150,17 @@
             <strong>1단계:</strong> 마인크래프트에서 채팅창을 열고 (T키)
         </div>
         <div style="margin-bottom: 15px;">
-            <strong>2단계:</strong> 아래 명령어를 복사해서 붙여넣기:
+            <strong>2단계:</strong> 아래 명령어를 복사해서 붙여넣기 <span style="color: #888; font-size: 14px;">(이미 복사됨)</span>
         </div>
         <div class="command-box" id="connect-command">/connect localhost:3000</div>
         <button class="copy-btn" onclick="copyCommand()">📋 복사</button>
         
         <div style="margin-top: 20px; color: #888; font-size: 14px;">
             <strong>연결이 안 될 경우:</strong> setup.bat 파일을 관리자 권한으로 실행해주세요
+        </div>
+        
+        <div class="nav-links" style="margin-top: 20px;">
+            <button class="nav-btn" onclick="openCodeBuilder()">🧩 코드 빌더 열기</button>
         </div>
     </div>
     
@@ -269,7 +269,7 @@
         // 창 닫기 시 서버 종료
         window.addEventListener('beforeunload', function(event) {
             event.preventDefault();
-            event.returnValue = '창을 닫으면 Bedrock Agent 프로그램이 종료됩니다. 정말 종료하시겠습니까?';
+            event.returnValue = '창을 닫으면 프로그램이 종료됩니다. 정말 종료하시겠습니까?';
             return event.returnValue;
         });
         
