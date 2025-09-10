@@ -2648,8 +2648,24 @@ async function start() {
             app.use(express.static(path.join(staticBase, 'client')));
             app.use('/shared', express.static(path.join(staticBase, 'shared')));
             app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
+            app.use('/public', express.static(path.join(staticBase, 'public')));
             app.get('/', (req, res) => {
                 res.sendFile(path.join(staticBase, 'client', 'index.html'));
+            });
+            
+            // 관리자 페이지
+            app.get('/admin', (req, res) => {
+                res.sendFile(path.join(staticBase, 'public', 'admin.html'));
+            });
+            
+            // API: 서버 상태 정보
+            app.get('/api/status', (req, res) => {
+                res.json({
+                    wsPort: wsPort,
+                    webPort: expressPort,
+                    timestamp: new Date().toISOString(),
+                    status: 'running'
+                });
             });
 
             // Express 서버 실행
@@ -2663,6 +2679,9 @@ async function start() {
                     console.clear();
                     console.log(data.green);
                     console.log(`만약 웹사이트가 자동으로 접속이 안될경우 "http://localhost:${expressPort}"에 접속하세요.`);
+                    console.log(`\n📊 서버 관리 페이지: http://localhost:${expressPort}/admin`.cyan);
+                    console.log(`   - 실시간 서버 상태 확인`.gray);
+                    console.log(`   - 연결 정보 및 로그 확인`.gray);
                 });
             });
 
