@@ -170,8 +170,21 @@
         function updateServerStatus() {
             const statusText = document.getElementById('status-text');
             
-            fetch('/api/status')
-                .then(response => response.json())
+            // 빠른 타임아웃으로 즉시 반응
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 500); // 0.5초 타임아웃
+            
+            fetch('/api/status', {
+                signal: controller.signal,
+                cache: 'no-cache'  // 캐시 무시
+            })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        throw new Error('Server not responding');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     // 서버가 정상 동작 중
                     statusText.textContent = '✅ 코드빌더 실행가능';
@@ -181,7 +194,8 @@
                     document.getElementById('connect-command').textContent = `/connect localhost:${data.wsPort || '3000'}`;
                 })
                 .catch(error => {
-                    // 서버 연결 실패
+                    clearTimeout(timeoutId);
+                    // 서버 연결 실패 (타임아웃 포함)
                     statusText.textContent = '❌ 프로그램이 종료됨';
                     statusText.className = 'status-text status-stopped';
                 });
@@ -190,8 +204,37 @@
         // 페이지 로드 시 상태 확인
         updateServerStatus();
         
-        // 5초마다 상태 확인
-        setInterval(updateServerStatus, 5000);
+        // 1초마다 상태 확인 (빠른 반응)
+        setInterval(updateServerStatus, 1000);
+        
+        // 페이지 포커스 시 즉시 상태 확인
+        window.addEventListener('focus', function() {
+            updateServerStatus();
+        });
+        
+        // 온라인/오프라인 이벤트 감지
+        window.addEventListener('online', function() {
+            updateServerStatus();
+        });
+        
+        window.addEventListener('offline', function() {
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = '❌ 네트워크 연결 끊김';
+            statusText.className = 'status-text status-stopped';
+        });
+        
+        // 키보드 새로고침 감지 시 즉시 상태 체크
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F5' || (event.ctrlKey && (event.key === 'r' || event.key === 'R'))) {
+                // 새로고침 후 빠르게 상태 체크하기 위해 짧은 간격으로 여러 번 체크
+                setTimeout(() => {
+                    updateServerStatus();
+                    setTimeout(updateServerStatus, 100);
+                    setTimeout(updateServerStatus, 300);
+                    setTimeout(updateServerStatus, 600);
+                }, 100);
+            }
+        });
         
         function copyCommand() {
             const command = document.getElementById('connect-command').textContent;
