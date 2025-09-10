@@ -188,6 +188,10 @@ async function start() {
         const wss = new WebSocket.Server({ port: wsPort });
 
         wss.on('connection', async socket => {
+            console.log('\n🎮 마인크래프트 연결됨! 블록 코딩 페이지를 여는 중...'.green);
+            
+            // 마인크래프트 연결 시 블록 코딩 페이지 자동 실행
+            exec(`start http://localhost:${expressPort}`);
 
             let minecraftSlot = 1;
             let commandBlocks = new Map();
