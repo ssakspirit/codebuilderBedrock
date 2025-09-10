@@ -99,37 +99,75 @@ async function start() {
             console.log(err);
             process.exit(1);
         }
-        console.clear();
-        console.log(data.green);
-        console.log(`Minecraft Bedrock CodeBuilder created by SteveCoding`);
-        // 클립보드에 명령어 복사
-        const command = `/connect localhost:${wsPort}`;
-        ncp.copy(command, function() {
-            console.log('\n=== 마인크래프트 연결 방법 ==='.yellow);
-            console.log('1. 마인크래프트 채팅창을 엽니다 (T키)'.cyan);
-            console.log(`2. 아래 명령어를 붙여넣기 하세요 (Ctrl+V)`.cyan);
-            console.log(`   ${command}`.green);
-            console.log('   (이미 클립보드에 복사되어 있습니다)'.gray);
-            console.log('3. 엔터키를 눌러 실행하세요'.cyan);
-            console.log('\n연결에 실패할 경우:'.yellow);
-            console.log('- "setup.bat"를 실행하세요'.gray);
-            console.log('- 마인크래프트가 최신 버전인지 확인하세요'.gray);
-            console.log('=========================\n'.yellow);
+
+        // Express 서버 설정 (마인크래프트 연결과 독립적으로)
+        const staticBase = extractAssetsIfNeeded();
+        app.use(express.static(path.join(staticBase, 'client')));
+        app.use('/shared', express.static(path.join(staticBase, 'shared')));
+        app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
+        app.use('/public', express.static(path.join(staticBase, 'public')));
+        app.get('/', (req, res) => {
+            res.sendFile(path.join(staticBase, 'client', 'index.html'));
+        });
+        
+        // 관리자 페이지
+        app.get('/admin', (req, res) => {
+            res.sendFile(path.join(staticBase, 'public', 'admin.html'));
+        });
+        
+        // API: 서버 상태 정보
+        app.get('/api/status', (req, res) => {
+            res.json({
+                wsPort: wsPort,
+                webPort: expressPort,
+                timestamp: new Date().toISOString(),
+                status: 'running'
+            });
+        });
+
+        // Express 서버를 즉시 시작
+        const server = http.createServer(app);
+        const io = new Server(server, {
+            cors: {
+                origin: `http://localhost:${wsPort}`,
+                methods: ["GET", "POST"]
+            }
+        });
+
+        // Express 서버 실행
+        server.listen(expressPort, () => {
+            console.clear();
+            console.log(data.green);
+            console.log(`\n🌐 서버 관리 UI가 자동으로 열립니다...`.cyan);
+            console.log(`📊 관리 페이지: http://localhost:${expressPort}/admin`.green);
+            console.log(`🧩 블록 코딩 페이지: http://localhost:${expressPort}`.yellow);
+            console.log(`\n   - 실시간 서버 상태 확인`.gray);
+            console.log(`   - 마인크래프트 연결 정보`.gray);
+            console.log(`   - 블록 코딩 인터페이스`.gray);
+            
+            // 클립보드에 명령어 복사
+            const command = `/connect localhost:${wsPort}`;
+            ncp.copy(command, function() {
+                console.log('\n=== 마인크래프트 연결 방법 ==='.yellow);
+                console.log('1. 마인크래프트 채팅창을 엽니다 (T키)'.cyan);
+                console.log(`2. 아래 명령어를 붙여넣기 하세요 (Ctrl+V)`.cyan);
+                console.log(`   ${command}`.green);
+                console.log('   (이미 클립보드에 복사되어 있습니다)'.gray);
+                console.log('3. 엔터키를 눌러 실행하세요'.cyan);
+                console.log('\n연결에 실패할 경우:'.yellow);
+                console.log('- "setup.bat"를 실행하세요'.gray);
+                console.log('- 마인크래프트가 최신 버전인지 확인하세요'.gray);
+                console.log('=========================\n'.yellow);
+            });
+            
+            // 웹 브라우저 자동 실행 (관리자 페이지로) - Express 서버 시작 즉시
+            exec(`start http://localhost:${expressPort}/admin`);
         });
 
         // WebSocket 서버 실행
         const wss = new WebSocket.Server({ port: wsPort });
 
         wss.on('connection', async socket => {
-            // Express 포트가 사용 중인지 재확인 (사실상 위에서 이미 확인함)
-            // 바로 서버 실행
-            const server = http.createServer(app);
-            const io = new Server(server, {
-                cors: {
-                    origin: `http://localhost:${wsPort}`,
-                    methods: ["GET", "POST"]
-                }
-            });
 
             let minecraftSlot = 1;
             let commandBlocks = new Map();
@@ -2643,52 +2681,6 @@ async function start() {
                 }
             }
 
-            // 정적 파일 경로를 임시 폴더로 보정
-            const staticBase = extractAssetsIfNeeded();
-            app.use(express.static(path.join(staticBase, 'client')));
-            app.use('/shared', express.static(path.join(staticBase, 'shared')));
-            app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
-            app.use('/public', express.static(path.join(staticBase, 'public')));
-            app.get('/', (req, res) => {
-                res.sendFile(path.join(staticBase, 'client', 'index.html'));
-            });
-            
-            // 관리자 페이지
-            app.get('/admin', (req, res) => {
-                res.sendFile(path.join(staticBase, 'public', 'admin.html'));
-            });
-            
-            // API: 서버 상태 정보
-            app.get('/api/status', (req, res) => {
-                res.json({
-                    wsPort: wsPort,
-                    webPort: expressPort,
-                    timestamp: new Date().toISOString(),
-                    status: 'running'
-                });
-            });
-
-            // Express 서버 실행
-            server.listen(expressPort, () => {
-                figlet('SteveCoding', function (err, data) {
-                    if (err) {
-                        console.log('Error generating ASCII art'.red);
-                        console.log(err);
-                        process.exit(1);
-                    }
-                    console.clear();
-                    console.log(data.green);
-                    console.log(`\n🌐 서버 관리 UI가 자동으로 열립니다...`.cyan);
-                    console.log(`📊 관리 페이지: http://localhost:${expressPort}/admin`.green);
-                    console.log(`🧩 블록 코딩 페이지: http://localhost:${expressPort}`.yellow);
-                    console.log(`\n   - 실시간 서버 상태 확인`.gray);
-                    console.log(`   - 마인크래프트 연결 정보`.gray);
-                    console.log(`   - 블록 코딩 인터페이스`.gray);
-                });
-            });
-
-            // 웹 브라우저 자동 실행 (관리자 페이지로)
-            exec(`start http://localhost:${expressPort}/admin`);
 
             socket.send(JSON.stringify({
                 "header": {
