@@ -69,7 +69,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-family: inherit;
-            margin-left: 10px;
+            white-space: nowrap;
         }
         
         .copy-btn:hover {
@@ -152,8 +152,10 @@
         <div style="margin-bottom: 15px;">
             <strong>2단계:</strong> 아래 명령어를 복사해서 붙여넣기 <span style="color: #888; font-size: 14px;">(이미 복사됨)</span>
         </div>
-        <div class="command-box" id="connect-command">/connect localhost:3000</div>
-        <button class="copy-btn" onclick="copyCommand()">📋 복사</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="copy-btn" onclick="copyCommand()">📋 복사</button>
+            <div class="command-box" id="connect-command" style="flex: 1;">/connect localhost:3000</div>
+        </div>
         
         <div style="margin-top: 20px; color: #888; font-size: 14px;">
             <strong>연결이 안 될 경우:</strong> setup.bat 파일을 관리자 권한으로 실행해주세요
