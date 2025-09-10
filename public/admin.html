@@ -97,12 +97,51 @@
             background: #0052a3;
         }
         
+        .status-indicator {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background: #2d2d2d;
+        }
+        
+        .status-text {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-ready {
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+        }
+        
+        .status-stopped {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+        }
+        
+        .status-checking {
+            color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid #ffaa00;
+        }
+        
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">🎮 Bedrock Agent</div>
         <div class="subtitle">Minecraft Bedrock CodeBuilder created by SteveCoding</div>
+    </div>
+    
+    <div class="status-indicator">
+        <div class="status-text" id="status-text">🔄 서버 상태 확인 중...</div>
     </div>
     
     <div class="nav-links">
@@ -127,17 +166,32 @@
     
     
     <script>
-        // 포트 정보 업데이트
-        fetch('/api/status')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('ws-port').textContent = data.wsPort || '3000';
-                document.getElementById('web-port').textContent = data.webPort || '4000';
-                document.getElementById('connect-command').textContent = `/connect localhost:${data.wsPort || '3000'}`;
-            })
-            .catch(error => {
-                console.log('포트 정보를 가져올 수 없습니다:', error);
-            });
+        // 서버 상태 확인 및 업데이트
+        function updateServerStatus() {
+            const statusText = document.getElementById('status-text');
+            
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // 서버가 정상 동작 중
+                    statusText.textContent = '✅ 코드빌더 실행가능';
+                    statusText.className = 'status-text status-ready';
+                    
+                    // 포트 정보 업데이트
+                    document.getElementById('connect-command').textContent = `/connect localhost:${data.wsPort || '3000'}`;
+                })
+                .catch(error => {
+                    // 서버 연결 실패
+                    statusText.textContent = '❌ 프로그램이 종료됨';
+                    statusText.className = 'status-text status-stopped';
+                });
+        }
+        
+        // 페이지 로드 시 상태 확인
+        updateServerStatus();
+        
+        // 5초마다 상태 확인
+        setInterval(updateServerStatus, 5000);
         
         function copyCommand() {
             const command = document.getElementById('connect-command').textContent;
