@@ -36,50 +36,6 @@
             font-size: 14px;
         }
         
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .status-card {
-            background: #2d2d2d;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        
-        .status-card h3 {
-            color: #00ff00;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 10px;
-        }
-        
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 5px 0;
-        }
-        
-        .status-label {
-            color: #ccc;
-        }
-        
-        .status-value {
-            color: #fff;
-            font-weight: bold;
-        }
-        
-        .status-online {
-            color: #00ff00;
-        }
-        
-        .status-offline {
-            color: #ff4444;
-        }
         
         .connection-info {
             background: #2d2d2d;
@@ -120,64 +76,6 @@
             background: #0052a3;
         }
         
-        .log-container {
-            background: #2d2d2d;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 20px;
-            height: 400px;
-            overflow-y: auto;
-        }
-        
-        .log-container h3 {
-            color: #00ff00;
-            margin-bottom: 15px;
-            position: sticky;
-            top: 0;
-            background: #2d2d2d;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #444;
-        }
-        
-        .log-item {
-            margin-bottom: 5px;
-            padding: 2px 0;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        
-        .log-time {
-            color: #888;
-        }
-        
-        .log-info {
-            color: #00ff00;
-        }
-        
-        .log-warn {
-            color: #ffaa00;
-        }
-        
-        .log-error {
-            color: #ff4444;
-        }
-        
-        .refresh-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #00ff00;
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .refresh-btn:hover {
-            background: #00cc00;
-        }
         
         .nav-links {
             margin-bottom: 20px;
@@ -199,105 +97,16 @@
             background: #0052a3;
         }
         
-        .control-btn {
-            background: #6B7280;
-            color: white;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        
-        .restart-btn {
-            background: #F59E0B;
-        }
-        
-        .restart-btn:hover {
-            background: #D97706;
-        }
-        
-        .stop-btn {
-            background: #EF4444;
-        }
-        
-        .stop-btn:hover {
-            background: #DC2626;
-        }
-        
-        .clear-btn {
-            background: #10B981;
-        }
-        
-        .clear-btn:hover {
-            background: #059669;
-        }
     </style>
 </head>
 <body>
-    <button class="refresh-btn" onclick="location.reload()">새로고침</button>
-    
     <div class="header">
-        <div class="title">🎮 Bedrock Agent 서버</div>
+        <div class="title">🎮 Bedrock Agent</div>
         <div class="subtitle">Minecraft Bedrock CodeBuilder created by SteveCoding</div>
     </div>
     
     <div class="nav-links">
-        <a href="/" class="nav-btn" target="_blank">🧩 블록 코딩 페이지</a>
-        <a href="/admin" class="nav-btn">📊 서버 관리</a>
-    </div>
-    
-    <div class="status-grid">
-        <div class="status-card">
-            <h3>📊 서버 상태</h3>
-            <div class="status-item">
-                <span class="status-label">WebSocket 서버:</span>
-                <span class="status-value status-online" id="ws-status">온라인</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">웹 서버:</span>
-                <span class="status-value status-online" id="web-status">온라인</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">WebSocket 포트:</span>
-                <span class="status-value" id="ws-port">-</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">웹 포트:</span>
-                <span class="status-value" id="web-port">-</span>
-            </div>
-        </div>
-        
-        <div class="status-card">
-            <h3>🔗 연결 상태</h3>
-            <div class="status-item">
-                <span class="status-label">마인크래프트:</span>
-                <span class="status-value" id="minecraft-status">대기 중</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">웹 클라이언트:</span>
-                <span class="status-value" id="client-status">대기 중</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">활성 명령 블록:</span>
-                <span class="status-value" id="command-blocks">0</span>
-            </div>
-            <div class="status-item">
-                <span class="status-label">실행 대기 명령:</span>
-                <span class="status-value" id="pending-commands">0</span>
-            </div>
-        </div>
-        
-        <div class="status-card">
-            <h3>⚡ 서버 제어</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="control-btn restart-btn" onclick="restartServer()">🔄 서버 재시작</button>
-                <button class="control-btn stop-btn" onclick="stopServer()">⏹️ 서버 종료</button>
-                <button class="control-btn clear-btn" onclick="clearConnections()">🧹 연결 초기화</button>
-            </div>
-        </div>
+        <a href="/" class="nav-btn" target="_blank">🧩 블록 코딩 시작하기</a>
     </div>
     
     <div class="connection-info">
@@ -316,15 +125,6 @@
         </div>
     </div>
     
-    <div class="log-container">
-        <h3>📝 실시간 로그</h3>
-        <div id="log-content">
-            <div class="log-item">
-                <span class="log-time">[시작]</span>
-                <span class="log-info">서버가 시작되었습니다.</span>
-            </div>
-        </div>
-    </div>
     
     <script>
         // 포트 정보 업데이트
@@ -353,56 +153,22 @@
             });
         }
         
-        // 서버 제어 함수들
-        function restartServer() {
-            if (confirm('서버를 재시작하시겠습니까? 모든 연결이 끊어집니다.')) {
-                fetch('/api/restart', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert('서버 재시작 중...');
-                        setTimeout(() => location.reload(), 3000);
-                    })
-                    .catch(error => {
-                        alert('재시작 요청 실패: ' + error.message);
-                    });
-            }
-        }
+        // 창 닫기 시 서버 종료
+        window.addEventListener('beforeunload', function(event) {
+            event.preventDefault();
+            event.returnValue = '창을 닫으면 Bedrock Agent 프로그램이 종료됩니다. 정말 종료하시겠습니까?';
+            return event.returnValue;
+        });
         
-        function stopServer() {
-            if (confirm('서버를 종료하시겠습니까? 프로그램이 완전히 종료됩니다.')) {
-                fetch('/api/stop', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert('서버가 종료됩니다.');
-                        window.close();
-                    })
-                    .catch(error => {
-                        alert('종료 요청 실패: ' + error.message);
-                    });
-            }
-        }
-        
-        function clearConnections() {
-            if (confirm('모든 연결을 초기화하시겠습니까?')) {
-                fetch('/api/clear', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert('연결이 초기화되었습니다.');
-                        location.reload();
-                    })
-                    .catch(error => {
-                        alert('초기화 요청 실패: ' + error.message);
-                    });
-            }
-        }
-        
-        // 상태 업데이트 (실제로는 Socket.IO로 실시간 업데이트)
-        function updateStatus() {
-            // 여기에 실시간 상태 업데이트 로직 추가 가능
-        }
-        
-        // 5초마다 상태 확인
-        setInterval(updateStatus, 5000);
+        window.addEventListener('unload', function() {
+            // 서버 종료 요청
+            fetch('/api/stop', { 
+                method: 'POST',
+                keepalive: true
+            }).catch(() => {
+                // 오류 무시 (페이지가 이미 닫히는 중)
+            });
+        });
     </script>
 </body>
 </html>
