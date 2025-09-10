@@ -198,6 +198,42 @@
         .nav-btn:hover {
             background: #0052a3;
         }
+        
+        .control-btn {
+            background: #6B7280;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .restart-btn {
+            background: #F59E0B;
+        }
+        
+        .restart-btn:hover {
+            background: #D97706;
+        }
+        
+        .stop-btn {
+            background: #EF4444;
+        }
+        
+        .stop-btn:hover {
+            background: #DC2626;
+        }
+        
+        .clear-btn {
+            background: #10B981;
+        }
+        
+        .clear-btn:hover {
+            background: #059669;
+        }
     </style>
 </head>
 <body>
@@ -253,6 +289,15 @@
                 <span class="status-value" id="pending-commands">0</span>
             </div>
         </div>
+        
+        <div class="status-card">
+            <h3>⚡ 서버 제어</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="control-btn restart-btn" onclick="restartServer()">🔄 서버 재시작</button>
+                <button class="control-btn stop-btn" onclick="stopServer()">⏹️ 서버 종료</button>
+                <button class="control-btn clear-btn" onclick="clearConnections()">🧹 연결 초기화</button>
+            </div>
+        </div>
     </div>
     
     <div class="connection-info">
@@ -306,6 +351,49 @@
                     btn.style.background = '#0066cc';
                 }, 2000);
             });
+        }
+        
+        // 서버 제어 함수들
+        function restartServer() {
+            if (confirm('서버를 재시작하시겠습니까? 모든 연결이 끊어집니다.')) {
+                fetch('/api/restart', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('서버 재시작 중...');
+                        setTimeout(() => location.reload(), 3000);
+                    })
+                    .catch(error => {
+                        alert('재시작 요청 실패: ' + error.message);
+                    });
+            }
+        }
+        
+        function stopServer() {
+            if (confirm('서버를 종료하시겠습니까? 프로그램이 완전히 종료됩니다.')) {
+                fetch('/api/stop', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('서버가 종료됩니다.');
+                        window.close();
+                    })
+                    .catch(error => {
+                        alert('종료 요청 실패: ' + error.message);
+                    });
+            }
+        }
+        
+        function clearConnections() {
+            if (confirm('모든 연결을 초기화하시겠습니까?')) {
+                fetch('/api/clear', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('연결이 초기화되었습니다.');
+                        location.reload();
+                    })
+                    .catch(error => {
+                        alert('초기화 요청 실패: ' + error.message);
+                    });
+            }
         }
         
         // 상태 업데이트 (실제로는 Socket.IO로 실시간 업데이트)

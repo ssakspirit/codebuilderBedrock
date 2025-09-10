@@ -64,13 +64,6 @@
             background-color: #B91C1C;
         }
 
-        button.disconnect-button {
-            background-color: #6B7280;
-        }
-
-        button.disconnect-button:hover {
-            background-color: #4B5563;
-        }
 
         #notification {
             position: fixed;
@@ -99,7 +92,6 @@
             <button onclick="saveWorkspace()">저장</button>
             <button onclick="loadWorkspace()">불러오기</button>
             <button class="stop-button" onclick="stopExecution()">실행 중지</button>
-            <button class="disconnect-button" onclick="socket.emit('stop'); window.close();">연결 끊기</button>
         </div>
     </div>
 

@@ -144,6 +144,31 @@ async function start() {
                 status: 'running'
             });
         });
+        
+        // API: 서버 재시작
+        app.post('/api/restart', (req, res) => {
+            res.json({ message: '서버 재시작 중...' });
+            console.log('🔄 웹 UI에서 서버 재시작 요청됨'.yellow);
+            setTimeout(() => {
+                process.exit(0); // PM2나 nodemon이 자동으로 재시작
+            }, 1000);
+        });
+        
+        // API: 서버 종료
+        app.post('/api/stop', (req, res) => {
+            res.json({ message: '서버 종료 중...' });
+            console.log('⏹️  웹 UI에서 서버 종료 요청됨'.red);
+            setTimeout(() => {
+                process.exit(0);
+            }, 1000);
+        });
+        
+        // API: 연결 초기화
+        app.post('/api/clear', (req, res) => {
+            res.json({ message: '연결 초기화됨' });
+            console.log('🧹 웹 UI에서 연결 초기화 요청됨'.cyan);
+            // 여기에 연결 초기화 로직 추가 가능
+        });
 
         // Express 서버를 즉시 시작
         const server = http.createServer(app);
