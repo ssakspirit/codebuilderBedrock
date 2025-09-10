@@ -1,1 +1,1 @@
-🚀 웹 UI 즉시 실행 구조 개선 - Express 서버를 WebSocket과 독립적으로 시작
+🔧 extractAssetsIfNeeded 함수 스코프 수정 - Express 서버 시작 전 정의 오류 해결

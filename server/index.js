@@ -80,6 +80,26 @@ async function portCheck(port) {
     });
 }
 
+// pkg로 빌드된 환경에서 정적 파일을 임시 폴더에 복사하는 함수
+function extractAssetsIfNeeded() {
+    if (process.pkg) {
+        const base = path.dirname(process.execPath);
+        const tmpDir = path.join(os.tmpdir(), 'bedrock-agent-static');
+        // 복사할 폴더 목록
+        const folders = ['client', 'blocks', 'shared', 'public'];
+        folders.forEach(folder => {
+            const src = path.join(base, folder);
+            const dest = path.join(tmpDir, folder);
+            if (!fse.existsSync(dest)) {
+                fse.copySync(src, dest);
+            }
+        });
+        return tmpDir;
+    } else {
+        return path.join(__dirname, '..');
+    }
+}
+
 async function start() {
     // 사용할 포트 범위 지정
     const wsPort = await findAvailablePort(3000, 3050);
@@ -2661,25 +2681,6 @@ async function start() {
                 socket.send(JSON.stringify(msg));
             }
             
-            // pkg로 빌드된 환경에서 정적 파일을 임시 폴더에 복사하는 함수
-            function extractAssetsIfNeeded() {
-                if (process.pkg) {
-                    const base = path.dirname(process.execPath);
-                    const tmpDir = path.join(os.tmpdir(), 'bedrock-agent-static');
-                    // 복사할 폴더 목록
-                    const folders = ['client', 'blocks', 'shared', 'public'];
-                    folders.forEach(folder => {
-                        const src = path.join(base, folder);
-                        const dest = path.join(tmpDir, folder);
-                        if (!fse.existsSync(dest)) {
-                            fse.copySync(src, dest);
-                        }
-                    });
-                    return tmpDir;
-                } else {
-                    return path.join(__dirname, '..');
-                }
-            }
 
 
             socket.send(JSON.stringify({
