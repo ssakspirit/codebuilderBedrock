@@ -135,13 +135,17 @@ async function start() {
             res.sendFile(path.join(staticBase, 'public', 'admin.html'));
         });
         
+        // 마인크래프트 연결 상태 추적
+        let minecraftConnected = false;
+        
         // API: 서버 상태 정보
         app.get('/api/status', (req, res) => {
             res.json({
                 wsPort: wsPort,
                 webPort: expressPort,
                 timestamp: new Date().toISOString(),
-                status: 'running'
+                status: 'running',
+                minecraftConnected: minecraftConnected
             });
         });
         
@@ -214,6 +218,9 @@ async function start() {
 
         wss.on('connection', async socket => {
             console.log('\n🎮 마인크래프트 연결됨! 블록 코딩 페이지를 여는 중...'.green);
+            
+            // 마인크래프트 연결 상태 업데이트
+            minecraftConnected = true;
             
             // 마인크래프트 연결 시 블록 코딩 페이지 자동 실행
             exec(`start http://localhost:${expressPort}`);
@@ -2780,6 +2787,9 @@ async function start() {
             });
 
             socket.on("close", () => {
+                // 마인크래프트 연결 상태 업데이트
+                minecraftConnected = false;
+                
                 figlet('Connection', function (err, data) {
                     if (err) {
                         console.log('Error generating ASCII art'.red);
