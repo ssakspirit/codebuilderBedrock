@@ -2678,15 +2678,17 @@ async function start() {
                     }
                     console.clear();
                     console.log(data.green);
-                    console.log(`만약 웹사이트가 자동으로 접속이 안될경우 "http://localhost:${expressPort}"에 접속하세요.`);
-                    console.log(`\n📊 서버 관리 페이지: http://localhost:${expressPort}/admin`.cyan);
-                    console.log(`   - 실시간 서버 상태 확인`.gray);
-                    console.log(`   - 연결 정보 및 로그 확인`.gray);
+                    console.log(`\n🌐 서버 관리 UI가 자동으로 열립니다...`.cyan);
+                    console.log(`📊 관리 페이지: http://localhost:${expressPort}/admin`.green);
+                    console.log(`🧩 블록 코딩 페이지: http://localhost:${expressPort}`.yellow);
+                    console.log(`\n   - 실시간 서버 상태 확인`.gray);
+                    console.log(`   - 마인크래프트 연결 정보`.gray);
+                    console.log(`   - 블록 코딩 인터페이스`.gray);
                 });
             });
 
-            // 웹 브라우저 자동 실행
-            exec(`start http://localhost:${expressPort}`);
+            // 웹 브라우저 자동 실행 (관리자 페이지로)
+            exec(`start http://localhost:${expressPort}/admin`);
 
             socket.send(JSON.stringify({
                 "header": {
