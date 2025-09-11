@@ -91,10 +91,27 @@ function extractAssetsIfNeeded() {
             const src = path.join(__dirname, '..', folder);
             const dest = path.join(tmpDir, folder);
             try {
-                if (!fse.existsSync(dest)) {
-                    console.log(`📁 ${folder} 폴더 추출 중...`);
-                    fse.copySync(src, dest);
-                    console.log(`✅ ${folder} 폴더 추출 완료`);
+                console.log(`📁 ${folder} 폴더 추출 시도...`);
+                console.log(`   원본: ${src}`);
+                console.log(`   대상: ${dest}`);
+                
+                if (fse.existsSync(src)) {
+                    console.log(`   ✅ 원본 폴더 존재함`);
+                    if (!fse.existsSync(dest)) {
+                        fse.copySync(src, dest);
+                        console.log(`   ✅ ${folder} 폴더 추출 완료`);
+                    } else {
+                        console.log(`   ℹ️ ${folder} 폴더 이미 존재함`);
+                    }
+                    
+                    // 복사 후 파일 개수 확인
+                    if (fse.existsSync(dest)) {
+                        const files = fse.readdirSync(dest);
+                        console.log(`   📄 복사된 파일 개수: ${files.length}`);
+                        files.forEach(file => console.log(`      - ${file}`));
+                    }
+                } else {
+                    console.log(`   ❌ 원본 폴더를 찾을 수 없음: ${src}`);
                 }
             } catch (error) {
                 console.error(`❌ ${folder} 폴더 추출 실패:`, error.message);

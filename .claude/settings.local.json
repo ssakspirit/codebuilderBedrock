@@ -15,7 +15,9 @@
       "Bash(npm start)",
       "Bash(rm:*)",
       "WebFetch(domain:minecraft.makecode.com)",
-      "Bash(npm run build:test:*)"
+      "Bash(npm run build:test:*)",
+      "Bash(dir:*)",
+      "Read(//tmp/bedrock-agent-static/public/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
