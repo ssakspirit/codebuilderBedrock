@@ -12,8 +12,19 @@ npm install
 
 ### 2️⃣ Windows 실행 파일 빌드
 
+**방법 1: 자동 빌드 스크립트 (권장)**
+```bash
+build.bat
+```
+
+**방법 2: 수동 빌드**
 ```bash
 npm run build
+```
+
+**방법 3: 디버그 빌드 (문제 발생 시)**
+```bash
+npm run build:test
 ```
 
 ✅ **결과**: `dist/Bedrock-CodeBuilder.exe` 파일이 생성됩니다.
@@ -101,6 +112,54 @@ pause
 2. **바이러스 검사**: 일부 백신에서 false positive가 발생할 수 있습니다
 3. **테스트**: 다른 컴퓨터에서 실행 테스트를 권장합니다
 4. **버전 관리**: package.json의 version을 업데이트하세요
+
+## 🚨 문제 해결
+
+### 실행 파일이 바로 꺼질 때
+
+**증상**: 실행 파일을 더블클릭하면 검은 창이 잠깐 뜨다가 바로 사라짐
+
+**해결 방법**:
+1. **디버그 빌드 실행**
+   ```bash
+   npm run build:test
+   dist\Bedrock-CodeBuilder-Debug.exe
+   ```
+
+2. **콘솔에서 직접 실행** (오류 메시지 확인)
+   ```bash
+   cd dist
+   Bedrock-CodeBuilder.exe
+   ```
+
+3. **일반적인 원인들**:
+   - Node.js 버전 불일치 → Node.js 18 이상 설치
+   - 바이러스 백신 차단 → 예외 목록에 추가
+   - 포트 충돌 → 다른 프로그램이 3000, 4000 포트 사용 중
+   - 권한 부족 → 관리자 권한으로 실행
+
+4. **최종 확인 사항**:
+   - Windows 10/11 64비트 확인
+   - Microsoft Visual C++ 재배포 가능 패키지 설치
+   - Windows Defender SmartScreen 해제
+
+### 빌드 실패 시
+
+**npm 관련 오류**:
+```bash
+npm cache clean --force
+npm install
+```
+
+**pkg 관련 오류**:
+```bash
+npm install -g pkg
+pkg --version
+```
+
+**권한 오류**:
+- PowerShell을 관리자 권한으로 실행
+- 또는 `build.bat` 사용
 
 ## 🔧 고급 설정
 

@@ -2812,3 +2812,30 @@ async function start() {
         });
     });
 }
+
+// 전역 에러 핸들링
+process.on('uncaughtException', (error) => {
+    console.error('❌ 치명적 오류 발생:', error);
+    console.log('프로그램을 종료합니다. 아무 키나 눌러주세요...');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', () => process.exit(1));
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ 처리되지 않은 Promise 거부:', reason);
+    console.log('프로그램을 종료합니다. 아무 키나 눌러주세요...');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', () => process.exit(1));
+});
+
+// 프로그램 시작
+console.log('🚀 Bedrock CodeBuilder 시작 중...');
+start().catch(error => {
+    console.error('❌ 시작 중 오류 발생:', error);
+    console.log('아무 키나 눌러 종료하세요...');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', () => process.exit(1));
+});
