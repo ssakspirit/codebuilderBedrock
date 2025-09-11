@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
+    "build": "pkg . --targets node18-win-x64 --output dist/Bedrock-CodeBuilder.exe",
+    "build:all": "pkg . --targets node18-win-x64,node18-macos-x64,node18-linux-x64 --out-path dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -25,7 +27,8 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "pkg": "^5.8.1"
   },
   "pkg": {
     "assets": [
@@ -34,7 +37,8 @@
       "blocks/**/*",
       "shared/**/*",
       "node_modules/figlet/fonts/**/*"
-    ]
+    ],
+    "outputPath": "dist"
   },
   "build": {
     "appId": "com.bedrock.agent",
