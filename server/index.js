@@ -83,15 +83,22 @@ async function portCheck(port) {
 // pkg로 빌드된 환경에서 정적 파일을 임시 폴더에 복사하는 함수
 function extractAssetsIfNeeded() {
     if (process.pkg) {
-        const base = path.dirname(process.execPath);
         const tmpDir = path.join(os.tmpdir(), 'bedrock-agent-static');
         // 복사할 폴더 목록
         const folders = ['client', 'blocks', 'shared', 'public'];
         folders.forEach(folder => {
-            const src = path.join(base, folder);
+            // pkg 환경에서는 __dirname이 snapshot 경로를 가리키므로 상대 경로 사용
+            const src = path.join(__dirname, '..', folder);
             const dest = path.join(tmpDir, folder);
-            if (!fse.existsSync(dest)) {
-                fse.copySync(src, dest);
+            try {
+                if (!fse.existsSync(dest)) {
+                    console.log(`📁 ${folder} 폴더 추출 중...`);
+                    fse.copySync(src, dest);
+                    console.log(`✅ ${folder} 폴더 추출 완료`);
+                }
+            } catch (error) {
+                console.error(`❌ ${folder} 폴더 추출 실패:`, error.message);
+                // 필수 폴더가 없어도 계속 실행하도록 함
             }
         });
         return tmpDir;

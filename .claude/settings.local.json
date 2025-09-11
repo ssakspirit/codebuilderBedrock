@@ -14,7 +14,8 @@
       "Bash(git commit:*)",
       "Bash(npm start)",
       "Bash(rm:*)",
-      "WebFetch(domain:minecraft.makecode.com)"
+      "WebFetch(domain:minecraft.makecode.com)",
+      "Bash(npm run build:test:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
