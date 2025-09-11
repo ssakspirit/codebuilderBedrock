@@ -134,12 +134,26 @@ async function start() {
         app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
         app.use('/public', express.static(path.join(staticBase, 'public')));
         app.get('/', (req, res) => {
-            res.sendFile(path.join(staticBase, 'client', 'index.html'));
+            const indexPath = path.join(staticBase, 'client', 'index.html');
+            console.log('👀 메인 페이지 경로:', indexPath);
+            if (fse.existsSync(indexPath)) {
+                res.sendFile(indexPath);
+            } else {
+                console.error('❌ 메인 페이지 파일을 찾을 수 없습니다:', indexPath);
+                res.status(404).send('메인 페이지를 찾을 수 없습니다.');
+            }
         });
         
         // 관리자 페이지
         app.get('/admin', (req, res) => {
-            res.sendFile(path.join(staticBase, 'public', 'admin.html'));
+            const adminPath = path.join(staticBase, 'public', 'admin.html');
+            console.log('👀 관리자 페이지 경로:', adminPath);
+            if (fse.existsSync(adminPath)) {
+                res.sendFile(adminPath);
+            } else {
+                console.error('❌ 관리자 페이지 파일을 찾을 수 없습니다:', adminPath);
+                res.status(404).send('관리자 페이지를 찾을 수 없습니다.');
+            }
         });
         
         // 마인크래프트 연결 상태 추적
