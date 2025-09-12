@@ -17,7 +17,18 @@
       "WebFetch(domain:minecraft.makecode.com)",
       "Bash(npm run build:test:*)",
       "Bash(dir:*)",
-      "Read(//tmp/bedrock-agent-static/public/**)"
+      "Read(//tmp/bedrock-agent-static/public/**)",
+      "Bash(rd:*)",
+      "Bash(del \"C:\\Users\\ssaks\\OneDrive - main\\#4 now coding\\bedrock agent\\code\\dist\\Bedrock-CodeBuilder-Debug.exe\")",
+      "Read(//tmp/**)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(.Bedrock-CodeBuilder-Debug.exe)",
+      "Bash(\".\\Bedrock-CodeBuilder-Debug.exe\")",
+      "Bash(tasklist)",
+      "Bash(del nul)",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

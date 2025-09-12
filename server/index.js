@@ -1,21 +1,41 @@
+console.log('🔥🔥🔥 프로그램 파일 로딩 시작!');
+
 // 공통 모듈 불러오기
 const { SOCKET_EVENTS, PORTS } = require('../shared/constants');
+console.log('✅ constants 로딩 완료');
 const { CommandData, Position } = require('../shared/types');
+console.log('✅ types 로딩 완료');
 
 const WebSocket = require('ws');
+console.log('✅ ws 로딩 완료');
 const uuid = require('uuid');
+console.log('✅ uuid 로딩 완료');
 const express = require('express');
+console.log('✅ express 로딩 완료');
 const { exec } = require('child_process');
+console.log('✅ child_process 로딩 완료');
 const figlet = require('figlet');
+console.log('✅ figlet 로딩 완료');
 const colors = require('colors');
+console.log('✅ colors 로딩 완료');
 const path = require('path');
+console.log('✅ path 로딩 완료');
 const app = express();
+console.log('✅ express 앱 생성 완료');
 const net = require('net');
+console.log('✅ net 로딩 완료');
 const http = require('http');
+console.log('✅ http 로딩 완료');
 const { Server } = require('socket.io');
+console.log('✅ socket.io Server 로딩 완료');
 const ncp = require('copy-paste');
+console.log('✅ copy-paste 로딩 완료');
 const fse = require('fs-extra'); // 정적 파일 복사용
+console.log('✅ fs-extra 로딩 완료');
 const os = require('os');
+console.log('✅ os 로딩 완료');
+
+console.log('🎉 모든 모듈 로딩 완료!');
 
 // 포트 자동 탐색 함수 추가
 async function findAvailablePort(startPort, endPort) {
@@ -57,6 +77,7 @@ function sendPlayerCommand(player, command, commandType = '명령어') {
     return finalCommand;
 }
 
+console.log('🎯🎯🎯 프로그램 시작! start() 함수 호출...');
 start();
 
 async function portCheck(port) {
@@ -80,52 +101,154 @@ async function portCheck(port) {
     });
 }
 
+// PKG 환경에서 정적 파일 라우팅 설정
+function setupPkgStaticRoutes(app) {
+    console.log('🎯 PKG 정적 파일 라우팅 설정 중...');
+    
+    const fs = require('fs');
+    
+    // 메인 index.html
+    app.get('/', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'client', 'index.html');
+            console.log('🔍 index.html 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'text/html');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ index.html 로드 실패:', error);
+            res.status(404).send('메인 페이지를 찾을 수 없습니다.');
+        }
+    });
+    
+    // 관리자 페이지
+    app.get('/admin', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'public', 'admin.html');
+            console.log('🔍 admin.html 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'text/html');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ admin.html 로드 실패:', error);
+            res.status(404).send('관리자 페이지를 찾을 수 없습니다.');
+        }
+    });
+    
+    // JavaScript 파일들
+    app.get('/main.js', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'client', 'main.js');
+            console.log('🔍 main.js 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ main.js 로드 실패:', error);
+            res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+    });
+    
+    app.get('/blockly/blocks.js', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'client', 'blockly', 'blocks.js');
+            console.log('🔍 blocks.js 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ blocks.js 로드 실패:', error);
+            res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+    });
+    
+    app.get('/blockly/generators.js', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'client', 'blockly', 'generators.js');
+            console.log('🔍 generators.js 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ generators.js 로드 실패:', error);
+            res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+    });
+    
+    // Shared 파일들
+    app.get('/shared/constants.js', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'shared', 'constants.js');
+            console.log('🔍 constants.js 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ constants.js 로드 실패:', error);
+            res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+    });
+    
+    app.get('/shared/types.js', (req, res) => {
+        try {
+            const filePath = path.join(__dirname, '..', 'shared', 'types.js');
+            console.log('🔍 types.js 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ types.js 로드 실패:', error);
+            res.status(404).send('파일을 찾을 수 없습니다.');
+        }
+    });
+    
+    // Socket.IO 클라이언트 라이브러리 라우팅
+    app.get('/socket.io/socket.io.js', (req, res) => {
+        try {
+            // Socket.IO는 서버에서 자동으로 제공되므로 직접 경로 찾기
+            const socketioPath = require.resolve('socket.io/client-dist/socket.io.js');
+            console.log('🔍 socket.io.js 경로:', socketioPath);
+            const content = fs.readFileSync(socketioPath, 'utf8');
+            res.set('Content-Type', 'application/javascript');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ socket.io.js 로드 실패:', error);
+            // 대안으로 CDN 리다이렉트
+            res.redirect('https://cdn.socket.io/4.7.5/socket.io.min.js');
+        }
+    });
+    
+    console.log('✅ PKG 정적 파일 라우팅 설정 완료');
+}
+
 // pkg로 빌드된 환경에서 정적 파일을 임시 폴더에 복사하는 함수
 function extractAssetsIfNeeded() {
+    console.log('🔧 extractAssetsIfNeeded 함수 호출됨');
+    console.log('🔧 process.pkg:', !!process.pkg);
+    
     if (process.pkg) {
-        const tmpDir = path.join(os.tmpdir(), 'bedrock-agent-static');
-        // 복사할 폴더 목록
-        const folders = ['client', 'blocks', 'shared', 'public'];
-        folders.forEach(folder => {
-            // pkg 환경에서는 __dirname이 snapshot 경로를 가리키므로 상대 경로 사용
-            const src = path.join(__dirname, '..', folder);
-            const dest = path.join(tmpDir, folder);
-            try {
-                console.log(`📁 ${folder} 폴더 추출 시도...`);
-                console.log(`   원본: ${src}`);
-                console.log(`   대상: ${dest}`);
-                
-                if (fse.existsSync(src)) {
-                    console.log(`   ✅ 원본 폴더 존재함`);
-                    if (!fse.existsSync(dest)) {
-                        fse.copySync(src, dest);
-                        console.log(`   ✅ ${folder} 폴더 추출 완료`);
-                    } else {
-                        console.log(`   ℹ️ ${folder} 폴더 이미 존재함`);
-                    }
-                    
-                    // 복사 후 파일 개수 확인
-                    if (fse.existsSync(dest)) {
-                        const files = fse.readdirSync(dest);
-                        console.log(`   📄 복사된 파일 개수: ${files.length}`);
-                        files.forEach(file => console.log(`      - ${file}`));
-                    }
-                } else {
-                    console.log(`   ❌ 원본 폴더를 찾을 수 없음: ${src}`);
-                }
-            } catch (error) {
-                console.error(`❌ ${folder} 폴더 추출 실패:`, error.message);
-                // 필수 폴더가 없어도 계속 실행하도록 함
-            }
-        });
-        return tmpDir;
+        console.log('✅ PKG 환경 감지됨 - 직접 서빙 모드 사용');
+        
+        // PKG 환경에서는 express.static을 사용하지 않고
+        // 개별 라우팅으로 파일을 직접 서빙합니다
+        return '__PKG_DIRECT_SERVE__';
     } else {
-        return path.join(__dirname, '..');
+        console.log('❌ PKG 환경 아님 - 기본 경로 사용');
+        const defaultPath = path.join(__dirname, '..');
+        console.log('🎯 기본 경로 반환:', defaultPath);
+        return defaultPath;
     }
 }
 
 async function start() {
+    console.log('🚀🚀🚀 START 함수 시작됨!');
+    console.log('📍 현재 작업 디렉토리:', process.cwd());
+    console.log('📍 __dirname:', __dirname);
+    console.log('📍 process.pkg:', !!process.pkg);
+    console.log('📍 process.execPath:', process.execPath);
+    
     // 사용할 포트 범위 지정
+    console.log('🔍 포트 검색 시작...');
     const wsPort = await findAvailablePort(3000, 3050);
     if (!wsPort) {
         console.log('사용 가능한 WebSocket 포트를 찾을 수 없습니다.');
@@ -141,37 +264,54 @@ async function start() {
         if (err) {
             console.log('Error generating ASCII art');
             console.log(err);
-            process.exit(1);
+            console.log('⚠️ ASCII art 오류 무시하고 계속 진행...');
+            // process.exit(1); // 주석 처리하여 계속 진행
+        } else {
+            console.log(data.green);
         }
 
         // Express 서버 설정 (마인크래프트 연결과 독립적으로)
+        console.log('🚀 Express 서버 설정 시작...');
         const staticBase = extractAssetsIfNeeded();
-        app.use(express.static(path.join(staticBase, 'client')));
-        app.use('/shared', express.static(path.join(staticBase, 'shared')));
-        app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
-        app.use('/public', express.static(path.join(staticBase, 'public')));
-        app.get('/', (req, res) => {
-            const indexPath = path.join(staticBase, 'client', 'index.html');
-            console.log('👀 메인 페이지 경로:', indexPath);
-            if (fse.existsSync(indexPath)) {
-                res.sendFile(indexPath);
-            } else {
-                console.error('❌ 메인 페이지 파일을 찾을 수 없습니다:', indexPath);
-                res.status(404).send('메인 페이지를 찾을 수 없습니다.');
-            }
-        });
+        console.log('📁 정적 파일 기본 경로:', staticBase);
         
-        // 관리자 페이지
-        app.get('/admin', (req, res) => {
-            const adminPath = path.join(staticBase, 'public', 'admin.html');
-            console.log('👀 관리자 페이지 경로:', adminPath);
-            if (fse.existsSync(adminPath)) {
-                res.sendFile(adminPath);
-            } else {
-                console.error('❌ 관리자 페이지 파일을 찾을 수 없습니다:', adminPath);
-                res.status(404).send('관리자 페이지를 찾을 수 없습니다.');
-            }
-        });
+        if (staticBase === '__PKG_DIRECT_SERVE__') {
+            console.log('🎯 PKG 직접 서빙 모드 - 개별 라우팅 설정');
+            
+            // PKG 환경에서는 개별 파일 라우팅 설정
+            setupPkgStaticRoutes(app);
+            
+        } else {
+            console.log('🎯 일반 정적 파일 서빙 모드');
+            app.use(express.static(path.join(staticBase, 'client')));
+            app.use('/shared', express.static(path.join(staticBase, 'shared')));
+            app.use('/blocks', express.static(path.join(staticBase, 'blocks')));
+            app.use('/public', express.static(path.join(staticBase, 'public')));
+            
+            // 일반 환경에서만 기본 라우팅 설정
+            app.get('/', (req, res) => {
+                const indexPath = path.join(staticBase, 'client', 'index.html');
+                console.log('👀 메인 페이지 경로:', indexPath);
+                if (fse.existsSync(indexPath)) {
+                    res.sendFile(indexPath);
+                } else {
+                    console.error('❌ 메인 페이지 파일을 찾을 수 없습니다:', indexPath);
+                    res.status(404).send('메인 페이지를 찾을 수 없습니다.');
+                }
+            });
+            
+            // 관리자 페이지
+            app.get('/admin', (req, res) => {
+                const adminPath = path.join(staticBase, 'public', 'admin.html');
+                console.log('👀 관리자 페이지 경로:', adminPath);
+                if (fse.existsSync(adminPath)) {
+                    res.sendFile(adminPath);
+                } else {
+                    console.error('❌ 관리자 페이지 파일을 찾을 수 없습니다:', adminPath);
+                    res.status(404).send('관리자 페이지를 찾을 수 없습니다.');
+                }
+            });
+        }
         
         // 마인크래프트 연결 상태 추적
         let minecraftConnected = false;

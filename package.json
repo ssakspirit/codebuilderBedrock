@@ -46,7 +46,10 @@
     "targets": [
       "node18-win-x64"
     ],
-    "outputPath": "dist"
+    "outputPath": "dist",
+    "options": [
+      "--icon", "icon.ico"
+    ]
   },
   "build": {
     "appId": "com.bedrock.agent",
