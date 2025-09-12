@@ -352,6 +352,57 @@ async function start() {
             // 여기에 연결 초기화 로직 추가 가능
         });
 
+        // API: 네트워크 설정 (마인크래프트 연결 설정)
+        app.post('/api/network-setup', (req, res) => {
+            const { spawn } = require('child_process');
+            
+            console.log('🔧 네트워크 설정 시작...'.yellow);
+            
+            // 관리자 권한으로 CheckNetIsolation 명령 실행
+            const setupProcess = spawn('powershell', [
+                '-Command', 
+                'Start-Process', 'cmd', 
+                '-ArgumentList', '"/c CheckNetIsolation LoopbackExempt -a -n=Microsoft.MinecraftUWP_8wekyb3d8bbwe & pause"',
+                '-Verb', 'RunAs'
+            ], { stdio: 'pipe' });
+
+            setupProcess.on('error', (error) => {
+                console.error('❌ 네트워크 설정 실패:', error.message);
+                res.json({ 
+                    success: false, 
+                    message: '네트워크 설정에 실패했습니다. 관리자 권한이 필요합니다.',
+                    error: error.message 
+                });
+            });
+
+            setupProcess.on('close', (code) => {
+                if (code === 0) {
+                    console.log('✅ 네트워크 설정 완료'.green);
+                    res.json({ 
+                        success: true, 
+                        message: '네트워크 설정이 완료되었습니다. 이제 마인크래프트에서 연결할 수 있습니다.' 
+                    });
+                } else {
+                    console.log(`⚠️ 네트워크 설정 종료됨 (코드: ${code})`.yellow);
+                    res.json({ 
+                        success: false, 
+                        message: '네트워크 설정이 취소되거나 실패했습니다.',
+                        code: code 
+                    });
+                }
+            });
+
+            // 즉시 응답 (비동기 처리)
+            setTimeout(() => {
+                if (!res.headersSent) {
+                    res.json({ 
+                        success: true, 
+                        message: '네트워크 설정 창이 열렸습니다. 관리자 권한 승인 후 실행됩니다.' 
+                    });
+                }
+            }, 1000);
+        });
+
         // Express 서버를 즉시 시작
         const server = http.createServer(app);
         const io = new Server(server, {

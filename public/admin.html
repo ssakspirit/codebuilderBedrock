@@ -163,6 +163,7 @@
         
         <div class="nav-links" style="margin-top: 20px;">
             <button class="nav-btn" onclick="openCodeBuilder()">🧩 코드 빌더 열기</button>
+            <button class="nav-btn" onclick="setupNetwork()">🔧 네트워크 설정</button>
         </div>
     </div>
     
@@ -265,6 +266,48 @@
                     btn.textContent = original;
                     btn.style.background = '#0066cc';
                 }, 2000);
+            });
+        }
+        
+        // 네트워크 설정 함수
+        function setupNetwork() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            // 버튼 비활성화 및 상태 표시
+            btn.disabled = true;
+            btn.textContent = '⏳ 설정 중...';
+            btn.style.background = '#666';
+            
+            fetch('/api/network-setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.textContent = '✅ 설정 완료!';
+                    btn.style.background = '#00aa00';
+                    alert('네트워크 설정이 완료되었습니다.\n이제 마인크래프트에서 연결할 수 있습니다.');
+                } else {
+                    throw new Error(data.error || '설정 실패');
+                }
+            })
+            .catch(error => {
+                btn.textContent = '❌ 설정 실패';
+                btn.style.background = '#cc0000';
+                alert('네트워크 설정 중 오류가 발생했습니다:\n' + error.message + 
+                      '\n\n수동으로 setup.bat를 관리자 권한으로 실행해주세요.');
+            })
+            .finally(() => {
+                // 3초 후 원래 상태로 복구
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    btn.style.background = '#0066cc';
+                }, 3000);
             });
         }
         
