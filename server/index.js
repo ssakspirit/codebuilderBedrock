@@ -9,6 +9,7 @@ const path = require('path');
 const http = require('http');
 const ncp = require('copy-paste');
 const fse = require('fs-extra');
+const fs = require('fs');
 const os = require('os');
 
 // 커스텀 모듈 로딩
@@ -46,10 +47,7 @@ async function startServer() {
 
         // Express 앱 설정
         const app = express();
-        setupExpressApp(app, wsPort);
-
-        // 네트워크 설정 확인 및 설정
-        await setupNetworkSettings();
+        setupExpressApp(app, wsPort, expressPort);
 
         // HTTP 서버 생성
         const server = http.createServer(app);
@@ -110,8 +108,9 @@ async function startServer() {
  * Express 애플리케이션 설정
  * @param {Express} app - Express 앱 인스턴스
  * @param {number} wsPort - WebSocket 포트
+ * @param {number} expressPort - Express 포트
  */
-function setupExpressApp(app, wsPort = 3000) {
+function setupExpressApp(app, wsPort = 3000, expressPort = 4000) {
     // 정적 파일 서빙
     app.use(express.static(path.join(__dirname, '../client')));
     app.use('/shared', express.static(path.join(__dirname, '../shared')));
@@ -122,75 +121,70 @@ function setupExpressApp(app, wsPort = 3000) {
     });
 
     app.get('/admin', (req, res) => {
-        const adminHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Bedrock CodeBuilder - 관리자</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-                .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                h1 { color: #333; text-align: center; }
-                .status { padding: 20px; margin: 20px 0; border-radius: 5px; }
-                .connected { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
-                .disconnected { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
-                .info { background-color: #e2e3e5; border: 1px solid #d6d8db; color: #383d41; padding: 15px; margin: 15px 0; border-radius: 5px; }
-                .button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
-                .button:hover { background-color: #0056b3; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🎮 Bedrock CodeBuilder 관리자</h1>
-                <div class="status ${minecraftConnected ? 'connected' : 'disconnected'}">
-                    <h3>${minecraftConnected ? '✅ 마인크래프트 연결됨' : '❌ 마인크래프트 연결 안됨'}</h3>
-                    <p>${minecraftConnected ? '마인크래프트가 성공적으로 연결되어 있습니다.' : '마인크래프트 연결을 기다리고 있습니다.'}</p>
-                </div>
-                <div class="info">
-                    <h3>📋 연결 방법</h3>
-                    <p>1. 마인크래프트를 실행하고 채팅창을 엽니다 (T키)</p>
-                    <p>2. 아래 명령어를 입력하세요: <code>/connect localhost:${wsPort}</code></p>
-                    <p>3. 연결에 실패하면 <strong>setup.bat</strong>을 관리자 권한으로 실행하세요</p>
-                </div>
-                <div class="info">
-                    <h3>🔧 바로가기</h3>
-                    <button class="button" onclick="window.open('/', '_blank')">블록 코딩 페이지 열기</button>
-                    <button class="button" onclick="location.reload()">페이지 새로고침</button>
-                </div>
-            </div>
-        </body>
-        </html>`;
-        res.send(adminHtml);
+        try {
+            const filePath = path.join(__dirname, '..', 'public', 'admin.html');
+            console.log('🔍 admin.html 경로:', filePath);
+            const content = fs.readFileSync(filePath, 'utf8');
+            res.set('Content-Type', 'text/html');
+            res.send(content);
+        } catch (error) {
+            console.error('❌ admin.html 로드 실패:', error);
+            res.status(404).send('관리자 페이지를 찾을 수 없습니다.');
+        }
     });
-}
 
-/**
- * 네트워크 설정 확인 및 구성
- */
-async function setupNetworkSettings() {
-    return new Promise((resolve) => {
-        // 네트워크 설정 확인
-        exec('CheckNetIsolation LoopbackExempt -s', (error, stdout) => {
-            if (error || !stdout.includes('Microsoft.MinecraftUWP_8wekyb3d8bbwe')) {
-                console.log('⚠️ 네트워크 설정이 필요합니다. setup.bat를 실행 중...');
+    // API 라우트들
+    app.get('/api/status', (req, res) => {
+        res.json({
+            wsPort: wsPort,
+            webPort: expressPort,
+            timestamp: new Date().toISOString(),
+            status: 'running',
+            minecraftConnected: minecraftConnected
+        });
+    });
 
-                // 자동으로 setup.bat 실행 시도
-                exec('powershell -Command "Start-Process setup.bat -Verb RunAs"', (setupError) => {
-                    if (setupError) {
-                        console.log('❌ 자동 설정 실패. 수동으로 setup.bat을 실행해주세요.');
-                    } else {
-                        console.log('✅ 네트워크 설정 창이 열렸습니다.');
-                    }
+    app.post('/api/network-setup', (req, res) => {
+        const { spawn } = require('child_process');
+
+        console.log('🔧 네트워크 설정 시작...');
+
+        // 관리자 권한으로 CheckNetIsolation 명령 실행
+        const setupProcess = spawn('powershell', [
+            '-Command',
+            'Start-Process', 'cmd',
+            '-ArgumentList', '"/c CheckNetIsolation LoopbackExempt -a -n=Microsoft.MinecraftUWP_8wekyb3d8bbwe & pause"',
+            '-Verb', 'RunAs'
+        ], { stdio: 'pipe' });
+
+        setupProcess.on('error', (error) => {
+            console.error('❌ 네트워크 설정 실패:', error.message);
+            res.json({
+                success: false,
+                message: '네트워크 설정에 실패했습니다. 관리자 권한이 필요합니다.',
+                error: error.message
+            });
+        });
+
+        setupProcess.on('close', (code) => {
+            if (code === 0) {
+                console.log('✅ 네트워크 설정 완료');
+                res.json({
+                    success: true,
+                    message: '네트워크 설정이 완료되었습니다.'
                 });
             } else {
-                console.log('✅ 네트워크 설정이 올바르게 구성되어 있습니다.');
+                console.error('❌ 네트워크 설정 실패, 종료 코드:', code);
+                res.json({
+                    success: false,
+                    message: '네트워크 설정에 실패했습니다.',
+                    error: `Process exited with code ${code}`
+                });
             }
-
-            setTimeout(resolve, 1000);
         });
     });
 }
+
 
 // 서버 시작
 startServer().catch(error => {
