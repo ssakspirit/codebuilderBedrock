@@ -17,6 +17,65 @@ socket.on('connect_error', function(error) {
     console.error('🔥 연결 에러:', error);
 });
 
+// 채팅 명령어 실행 이벤트 처리
+socket.on('executeCommand', async function(blockId) {
+    if (isExecuting) {
+        showNotification('이미 실행 중입니다.');
+        return;
+    }
+
+    const blocks = workspace.getTopBlocks(true);
+    const eventBlocks = blocks.filter(block => block.type === 'on_chat_command');
+
+    const targetBlock = eventBlocks.find(block => block.id === blockId);
+    if (targetBlock) {
+        try {
+            isExecuting = true;
+            shouldStop = false;
+            console.log('\n=== 채팅 명령어 실행 시작 ===');
+            console.log('블록 ID:', blockId);
+            console.log('------------------------');
+            showNotification('채팅 명령어를 실행합니다...');
+
+            let nextBlock = targetBlock.getInputTargetBlock('NEXT');
+
+            while (nextBlock) {
+                if (shouldStop) {
+                    console.log('실행이 중단되었습니다.');
+                    showNotification('실행이 중단되었습니다.');
+                    isExecuting = false;
+                    return;
+                }
+
+                try {
+                    const blockCode = Blockly.JavaScript.blockToCode(nextBlock, Blockly.JavaScript.ORDER_STATEMENT_LIST);
+                    if (blockCode.trim()) {
+                        console.log('실행할 코드:', blockCode);
+                        await eval(blockCode);
+                    }
+                } catch (error) {
+                    console.error('블록 실행 오류:', error);
+                    showNotification('블록 실행 중 오류가 발생했습니다: ' + error.message);
+                }
+
+                nextBlock = nextBlock.getNextBlock();
+            }
+
+            console.log('=== 채팅 명령어 실행 완료 ===\n');
+            showNotification('채팅 명령어 실행이 완료되었습니다.');
+
+        } catch (error) {
+            console.error('명령어 실행 오류:', error);
+            showNotification('명령어 실행 중 오류가 발생했습니다: ' + error.message);
+        } finally {
+            isExecuting = false;
+        }
+    } else {
+        console.log('해당하는 블록을 찾을 수 없습니다:', blockId);
+        showNotification('해당하는 블록을 찾을 수 없습니다.');
+    }
+});
+
 // 블록 스타일 정의
 Blockly.Theme.defineTheme('custom_theme', {
     'base': Blockly.Themes.Classic,
@@ -704,5 +763,61 @@ function loadWorkspace() {
     } catch (error) {
         console.error('❌ 파일 불러오기 실패:', error);
         showNotification('파일 불러오기에 실패했습니다: ' + error.message);
+    }
+}
+
+// 코드 실행 함수
+function runCode() {
+    try {
+        if (isExecuting) {
+            showNotification('이미 실행 중입니다.');
+            return;
+        }
+
+        const topBlocks = workspace.getTopBlocks(true);
+        if (topBlocks.length === 0) {
+            showNotification('실행할 블록이 없습니다.');
+            return;
+        }
+
+        console.log('🚀 코드 실행 시작');
+        isExecuting = true;
+        shouldStop = false;
+
+        // 각 최상위 블록에 대해 코드 생성 및 실행
+        for (let i = 0; i < topBlocks.length; i++) {
+            const block = topBlocks[i];
+            console.log('🔧 블록 처리:', block.type, block.id);
+
+            if (shouldStop) {
+                console.log('🛑 실행 중지됨');
+                break;
+            }
+
+            try {
+                // JavaScript 코드 생성
+                const code = Blockly.JavaScript.blockToCode(block, Blockly.JavaScript.ORDER_STATEMENT_LIST);
+
+                if (code.trim()) {
+                    console.log('📝 생성된 코드:', code);
+                    // 코드 실행
+                    eval(code);
+                } else {
+                    console.log('ℹ️ 빈 코드 블록:', block.type);
+                }
+            } catch (blockError) {
+                console.error('❌ 블록 실행 오류:', blockError, '블록:', block.type);
+                showNotification(`블록 실행 오류: ${blockError.message}`);
+            }
+        }
+
+        console.log('✅ 코드 실행 완료');
+        showNotification('코드 실행이 완료되었습니다.');
+
+    } catch (error) {
+        console.error('❌ 코드 실행 실패:', error);
+        showNotification('코드 실행에 실패했습니다: ' + error.message);
+    } finally {
+        isExecuting = false;
     }
 }
