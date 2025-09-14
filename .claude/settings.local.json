@@ -28,7 +28,8 @@
       "Bash(\".\\Bedrock-CodeBuilder-Debug.exe\")",
       "Bash(tasklist)",
       "Bash(del nul)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
