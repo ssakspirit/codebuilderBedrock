@@ -21,10 +21,12 @@ class SocketIOServer {
      * 명령어 관리자와 이벤트 핸들러 설정
      * @param {CommandManager} commandManager - 명령어 관리자
      * @param {EventHandlers} eventHandlers - 이벤트 핸들러
+     * @param {WebSocketServer} webSocketServer - WebSocket 서버
      */
-    setManagers(commandManager, eventHandlers) {
+    setManagers(commandManager, eventHandlers, webSocketServer) {
         this.commandManager = commandManager;
         this.eventHandlers = eventHandlers;
+        this.webSocketServer = webSocketServer;
     }
 
     /**
@@ -102,8 +104,10 @@ class SocketIOServer {
                     this.eventHandlers.setPendingBlockDetect(true);
                 }
 
-                // 블록 감지 요청을 마인크래프트로 전송하는 로직은 WebSocket 서버에서 처리
-                this.io.emit('forwardBlockDetect', data);
+                // WebSocket 서버를 통해 마인크래프트로 명령 전송
+                if (this.webSocketServer) {
+                    this.webSocketServer.send(`/agent detect ${data.direction} block`);
+                }
             });
 
             // 서버 상태 요청 처리

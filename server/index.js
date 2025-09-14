@@ -67,7 +67,7 @@ async function startServer() {
         });
 
         // 의존성 연결
-        socketIOServer.setManagers(commandManager, eventHandlers);
+        socketIOServer.setManagers(commandManager, eventHandlers, webSocketServer);
         webSocketServer.setHandlers(eventHandlers, socketIOServer);
 
         // Socket.IO 이벤트 리스너 설정
