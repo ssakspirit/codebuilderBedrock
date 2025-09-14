@@ -33,8 +33,8 @@ async function startServer() {
         await Logger.printTitle('Bedrock CodeBuilder', 'green');
 
         // 사용 가능한 포트 찾기
-        const wsPort = await findAvailablePort(PORTS.WS_START, PORTS.WS_END);
-        const expressPort = await findAvailablePort(PORTS.EXPRESS_START, PORTS.EXPRESS_END);
+        const wsPort = await findAvailablePort(3000, 3050);
+        const expressPort = await findAvailablePort(4000, 4050);
 
         if (!wsPort || !expressPort) {
             console.error('❌ 사용 가능한 포트를 찾을 수 없습니다.');
@@ -46,7 +46,7 @@ async function startServer() {
 
         // Express 앱 설정
         const app = express();
-        setupExpressApp(app);
+        setupExpressApp(app, wsPort);
 
         // 네트워크 설정 확인 및 설정
         await setupNetworkSettings();
@@ -109,8 +109,9 @@ async function startServer() {
 /**
  * Express 애플리케이션 설정
  * @param {Express} app - Express 앱 인스턴스
+ * @param {number} wsPort - WebSocket 포트
  */
-function setupExpressApp(app) {
+function setupExpressApp(app, wsPort = 3000) {
     // 정적 파일 서빙
     app.use(express.static(path.join(__dirname, '../client')));
     app.use('/shared', express.static(path.join(__dirname, '../shared')));
@@ -149,7 +150,7 @@ function setupExpressApp(app) {
                 <div class="info">
                     <h3>📋 연결 방법</h3>
                     <p>1. 마인크래프트를 실행하고 채팅창을 엽니다 (T키)</p>
-                    <p>2. 아래 명령어를 입력하세요: <code>/connect localhost:${findAvailablePort ? 'PORT' : 'PORT_UNKNOWN'}</code></p>
+                    <p>2. 아래 명령어를 입력하세요: <code>/connect localhost:${wsPort}</code></p>
                     <p>3. 연결에 실패하면 <strong>setup.bat</strong>을 관리자 권한으로 실행하세요</p>
                 </div>
                 <div class="info">
