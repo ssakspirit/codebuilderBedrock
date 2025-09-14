@@ -176,7 +176,7 @@ function initBlockly() {
     Blockly.JavaScript.addReservedWords('code');
     Blockly.JavaScript.STATEMENT_PREFIX = '';
     
-    // 기본 변수 생성
+    // 기본 변수 생성 (v11 호환)
     workspace.createVariable('점수', '', '점수');
 
     // 변수 카테고리의 flyout 수정

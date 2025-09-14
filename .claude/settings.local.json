@@ -29,7 +29,8 @@
       "Bash(tasklist)",
       "Bash(del nul)",
       "Bash(git config:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
