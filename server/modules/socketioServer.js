@@ -14,6 +14,7 @@ class SocketIOServer {
         });
         this.commandManager = null;
         this.eventHandlers = null;
+        this.webSocketServer = null;
     }
 
     /**

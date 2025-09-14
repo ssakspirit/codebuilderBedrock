@@ -61,14 +61,6 @@ class WebSocketServer {
                 console.error('❌ WebSocket 오류:', error);
             });
 
-            // Socket.IO에서 전달받은 블록 감지 요청 처리
-            if (this.socketIOServer) {
-                this.socketIOServer.getIO().on('connection', (clientSocket) => {
-                    clientSocket.on('forwardBlockDetect', (data) => {
-                        this.handleBlockDetectRequest(data);
-                    });
-                });
-            }
         });
     }
 
