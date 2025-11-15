@@ -69,7 +69,7 @@ MIT License
 
 ## 마인크래프트 베드락 에디션(Windows)에서 로컬 서버 연결 허용
 
-Microsoft Store에서 설치한 마인크래프트 베드락 에디션(UWP 앱)은 보안상 기본적으로 localhost(127.0.0.1)로의 네트워크 접근이 차단되어 있습니다. 
+Microsoft Store에서 설치한 마인크래프트 베드락 에디션(UWP 앱)은 보안상 기본적으로 localhost(127.0.0.1)로의 네트워크 접근이 차단되어 있습니다.
 
 **아래 명령어를 반드시 관리자 권한 명령 프롬프트에서 실행해 주세요!**
 
@@ -79,7 +79,21 @@ CheckNetIsolation LoopbackExempt -a -n="Microsoft.MinecraftUWP_8wekyb3d8bbwe"
 
 이 명령어를 실행하면 마인크래프트가 여러분의 서버(이 프로그램)와 정상적으로 통신할 수 있습니다.
 
-- 예외 목록 확인:  
+- 예외 목록 확인:
   `CheckNetIsolation LoopbackExempt -s`
-- 예외 삭제:  
-  `CheckNetIsolation LoopbackExempt -d -n="Microsoft.MinecraftUWP_8wekyb3d8bbwe"` 
+- 예외 삭제:
+  `CheckNetIsolation LoopbackExempt -d -n="Microsoft.MinecraftUWP_8wekyb3d8bbwe"`
+
+## 마인크래프트 1.21.123 버전 호환성
+
+최신 마인크래프트 베드락 1.21.123 버전에서 작동하도록 업데이트되었습니다. 연결이 안 될 경우:
+
+1. **암호화된 WebSocket 설정 끄기**
+   - 마인크래프트: 설정 → 일반 → "암호화된 웹소켓 요구" → 끄기
+
+2. **치트 활성화**
+   - 월드 설정에서 치트(Cheats) 활성화 필요
+
+3. **연결 명령어**
+   - 마인크래프트 채팅창에서 `/connect localhost:3000` 입력
+   - 포트 번호는 프로그램 실행 시 표시됨 

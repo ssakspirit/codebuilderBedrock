@@ -125,6 +125,177 @@ class SocketIOServer {
                 });
             });
 
+            // ========== 에이전트 명령어 핸들러 (1.21.123 호환성) ==========
+
+            // 에이전트 생성
+            clientSocket.on("spawn", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent create");
+                    console.log('✨ 에이전트 생성');
+                }
+            });
+
+            // 에이전트 이동 명령어
+            clientSocket.on("goforward", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move forward");
+                    console.log('➡️ 앞으로 이동');
+                }
+            });
+
+            clientSocket.on("goBack", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move back");
+                    console.log('⬅️ 뒤로 이동');
+                }
+            });
+
+            clientSocket.on("goUp", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move up");
+                    console.log('⬆️ 위로 이동');
+                }
+            });
+
+            clientSocket.on("goDown", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move down");
+                    console.log('⬇️ 아래로 이동');
+                }
+            });
+
+            clientSocket.on("goLeft", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move left");
+                    console.log('↖️ 왼쪽으로 이동');
+                }
+            });
+
+            clientSocket.on("goRight", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent move right");
+                    console.log('↗️ 오른쪽으로 이동');
+                }
+            });
+
+            // 에이전트 회전
+            clientSocket.on("rotateLeft", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent turn left");
+                    console.log('↪️ 왼쪽으로 회전');
+                }
+            });
+
+            clientSocket.on("rotateRight", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent turn right");
+                    console.log('↩️ 오른쪽으로 회전');
+                }
+            });
+
+            // 블록 파괴
+            clientSocket.on("destroy", (direction) => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send(`agent destroy ${direction}`);
+                    console.log(`⛏️ ${direction} 블록 파괴`);
+                }
+            });
+
+            // 에이전트 공격
+            clientSocket.on("attack", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent attack");
+                    console.log('⚔️ 공격');
+                }
+            });
+
+            // 블록 설치
+            clientSocket.on("place", (direction) => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send(`agent place ${direction}`);
+                    console.log(`🧱 ${direction} 블록 설치`);
+                }
+            });
+
+            // 수집
+            clientSocket.on("collect", () => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send("agent collect all");
+                    console.log('🔍 아이템 수집');
+                }
+            });
+
+            // 드롭
+            clientSocket.on("drop", (slot) => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send(`agent drop ${slot} all`);
+                    console.log(`📦 슬롯 ${slot} 드롭`);
+                }
+            });
+
+            // 텔레포트
+            clientSocket.on("teleport", (position) => {
+                if (this.webSocketServer) {
+                    this.webSocketServer.send(`agent tp ${position}`);
+                    console.log(`📍 텔레포트: ${position}`);
+                }
+            });
+
+            // setblock 명령어
+            clientSocket.on("setblock", (data) => {
+                if (this.webSocketServer) {
+                    const { x, y, z, blockType, isAbsolute, isCamera, isFacing, isLocal } = data;
+                    let command;
+
+                    if (isAbsolute) {
+                        command = `setblock ${x} ${y} ${z} ${blockType}`;
+                    } else if (isCamera) {
+                        command = `execute @p ~ ~ ~ setblock ~${x} ~${y} ~${z} ${blockType}`;
+                    } else if (isFacing && isLocal) {
+                        command = `execute @p ~ ~ ~ setblock ^${x} ^${y} ^${z} ${blockType}`;
+                    } else {
+                        command = `execute @p ~ ~ ~ setblock ~${x} ~${y} ~${z} ${blockType}`;
+                    }
+
+                    this.webSocketServer.send(command);
+                    console.log(`🔨 블록 설치: ${command}`);
+                }
+            });
+
+            // fill 명령어
+            clientSocket.on("fill", (data) => {
+                if (this.webSocketServer) {
+                    const { x1, y1, z1, x2, y2, z2, blockType, isAbsolute } = data;
+                    let command;
+
+                    if (isAbsolute) {
+                        command = `fill ${x1} ${y1} ${z1} ${x2} ${y2} ${z2} ${blockType}`;
+                    } else {
+                        command = `execute @p ~ ~ ~ fill ~${x1} ~${y1} ~${z1} ~${x2} ~${y2} ~${z2} ${blockType}`;
+                    }
+
+                    this.webSocketServer.send(command);
+                    console.log(`🏗️ 영역 채우기: ${command}`);
+                }
+            });
+
+            // summon 명령어
+            clientSocket.on("summon", (data) => {
+                if (this.webSocketServer) {
+                    const { entityType, x, y, z, isAbsolute } = data;
+                    let command;
+
+                    if (isAbsolute) {
+                        command = `summon ${entityType} ${x} ${y} ${z}`;
+                    } else {
+                        command = `execute @p ~ ~ ~ summon ${entityType} ~${x} ~${y} ~${z}`;
+                    }
+
+                    this.webSocketServer.send(command);
+                    console.log(`👾 몹 소환: ${command}`);
+                }
+            });
+
             // 클라이언트 연결 해제 처리
             clientSocket.on('disconnect', () => {
                 console.log('❌ 웹 클라이언트 연결 해제됨');
