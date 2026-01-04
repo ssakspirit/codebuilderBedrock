@@ -1,1 +1,1 @@
-📚 개발 레퍼런스 문서 추가 - Code Connection API, Agent 명령어, Blockly 가이드, 프로토콜 문서 등 모든 참고 자료 정리 (docs/REFERENCES.md)
+📚 레퍼런스 문서 확장 - 핵심 레퍼런스 요약표, 이벤트 시스템 상세, MakeCode 등 유사 프로젝트 추가 (docs/REFERENCES.md)

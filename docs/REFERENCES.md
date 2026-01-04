@@ -6,12 +6,84 @@
 
 ## 📚 목차
 
-1. [Minecraft Code Connection](#minecraft-code-connection)
-2. [Minecraft Agent Commands](#minecraft-agent-commands)
-3. [Blockly 개발](#blockly-개발)
-4. [Bedrock Edition Protocol](#bedrock-edition-protocol)
-5. [WebSocket & Socket.IO](#websocket--socketio)
-6. [커뮤니티 리소스](#커뮤니티-리소스)
+1. [핵심 레퍼런스 요약](#핵심-레퍼런스-요약)
+2. [Minecraft Code Connection](#minecraft-code-connection)
+3. [Minecraft Agent Commands](#minecraft-agent-commands)
+4. [Blockly 개발](#blockly-개발)
+5. [Bedrock Edition Protocol](#bedrock-edition-protocol)
+6. [WebSocket & Socket.IO](#websocket--socketio)
+7. [유사 프로젝트](#유사-프로젝트)
+8. [이벤트 시스템](#이벤트-시스템)
+9. [커뮤니티 리소스](#커뮤니티-리소스)
+
+---
+
+## 핵심 레퍼런스 요약
+
+프로젝트 개발에 가장 중요한 레퍼런스를 빠르게 참조할 수 있도록 정리했습니다.
+
+### 1. Blockly (비주얼 블록 코딩)
+
+| 리소스 | URL |
+|--------|-----|
+| Blockly 공식 문서 | https://developers.google.com/blockly |
+| Blockly 데모 | https://blockly.games/ |
+| Custom Block 가이드 | https://developers.google.com/blockly/guides/create-custom-blocks/overview |
+| Code Generators 가이드 | https://developers.google.com/blockly/guides/create-custom-blocks/generating-code |
+| Block Factory (도구) | https://developers.google.com/blockly/guides/create-custom-blocks/blockly-developer-tools |
+| 한국어 가이드 | https://developers.google.com/blockly/guides/overview |
+
+### 2. Minecraft Bedrock Edition - 연결 프로토콜
+
+| 리소스 | 설명 |
+|--------|------|
+| Minecraft Code Connection | MakeCode, Scratch와 연결하는 공식 도구 (2023년 중단) |
+| WebSocket 명령어 문서 | Bedrock 서버 프로토콜 - https://github.com/Mojang/bedrock-protocol-docs |
+| 교육용 에디션 API | Minecraft Creator 문서 - https://learn.microsoft.com/en-us/minecraft/creator/ |
+| Commands Introduction | https://learn.microsoft.com/en-us/minecraft/creator/documents/commandsintroduction |
+
+### 3. Node.js & WebSocket
+
+| 리소스 | URL |
+|--------|-----|
+| ws 라이브러리 | https://github.com/websockets/ws |
+| Socket.IO 문서 | https://socket.io/docs/v4/ |
+| Express.js 가이드 | https://expressjs.com/ko/guide/routing.html |
+| Node.js 공식 문서 | https://nodejs.org/docs/latest/api/ |
+
+### 4. Minecraft 에이전트 명령어
+
+#### 기본 명령어
+```bash
+agent move <direction>      # forward/back/left/right/up/down
+agent turn <direction>      # left/right
+agent place <direction>     # 블록 설치
+agent destroy <direction>   # 블록 파괴
+agent collect <item>        # 아이템 수집
+agent create               # 에이전트 생성
+agent tp <x> <y> <z>       # 텔레포트
+```
+
+#### 월드 조작 명령어
+```bash
+setblock <x> <y> <z> <block>     # 블록 배치
+fill <x1> <y1> <z1> <x2> <y2> <z2> <block>  # 영역 채우기
+execute <player> ~ ~ ~ <cmd>     # 플레이어 컨텍스트 실행
+say <message>                    # 채팅 메시지
+```
+
+#### 좌표 시스템
+```bash
+~x ~y ~z     # 상대 좌표 (현재 위치 기준)
+x y z        # 절대 좌표 (월드 고정 위치)
+^x ^y ^z     # 로컬 좌표 (바라보는 방향 기준)
+```
+
+| 리소스 | URL |
+|--------|-----|
+| Bedrock 명령어 레퍼런스 | https://minecraft.wiki/w/Commands |
+| 에이전트 명령어 | https://learn.microsoft.com/en-us/minecraft/creator/documents/commandsintroduction |
+| Execute 명령어 가이드 | https://minecraft.wiki/w/Commands/execute |
 
 ---
 
@@ -258,6 +330,204 @@ socket.on("chat message", (msg) => {
     console.log(msg);
 });
 ```
+
+---
+
+## 유사 프로젝트
+
+다른 Minecraft 비주얼 프로그래밍 프로젝트를 참고하여 아이디어와 구현 방법을 얻을 수 있습니다.
+
+### MakeCode for Minecraft
+
+**공식 Microsoft 프로젝트** - Blockly 기반 Minecraft 코딩 도구
+
+| 항목 | 정보 |
+|------|------|
+| 공식 사이트 | https://minecraft.makecode.com/ |
+| 문서 | https://minecraft.makecode.com/reference |
+| GitHub | https://github.com/microsoft/pxt-minecraft |
+| 튜토리얼 | https://minecraft.makecode.com/tutorials |
+
+**특징:**
+- Blockly 기반 비주얼 프로그래밍
+- JavaScript/Python 코드 생성
+- 에이전트 제어 및 월드 조작
+- 교육용으로 최적화
+
+**참고할 점:**
+- 블록 디자인 패턴
+- 에이전트 명령어 구조
+- 이벤트 처리 방식
+- 사용자 인터페이스
+
+### Scratch for Minecraft
+
+Scratch 3.0과 Minecraft를 연동하는 프로젝트
+
+| 항목 | 정보 |
+|------|------|
+| Scratch Extension | https://scratch.mit.edu/projects/editor/ |
+| 연동 가이드 | 커뮤니티 제공 |
+
+### ProgramTheWorld
+
+WebSocket 기반 Minecraft 연결 예제
+
+| 항목 | 정보 |
+|------|------|
+| 설명 | WebSocket을 통한 Minecraft 제어 |
+| 기술 스택 | Node.js, WebSocket |
+| 참고 사항 | 실시간 명령어 전송 패턴 |
+
+### 기타 참고 프로젝트
+
+1. **ComputerCraft** - Lua 기반 Minecraft 프로그래밍
+   - https://www.computercraft.info/
+   - 블록 실행 패턴 참고
+
+2. **Open Computers** - Lua/Python 기반 모드
+   - https://ocdoc.cil.li/
+   - API 디자인 참고
+
+3. **Minecraft Pi Edition** - Python API
+   - Raspberry Pi용 Minecraft
+   - 간단한 API 구조 참고
+
+---
+
+## 이벤트 시스템
+
+Minecraft Bedrock Edition에서 발생하는 이벤트를 처리하는 시스템입니다.
+
+### 프로젝트에서 사용하는 Minecraft 이벤트
+
+| 이벤트 이름 | 설명 | 트리거 | 사용 예시 |
+|------------|------|--------|----------|
+| **PlayerMessage** | 채팅 메시지 | 플레이어가 채팅 입력 | 명령어 실행 트리거 |
+| **ItemAcquired** | 아이템 획득 | 아이템을 인벤토리에 추가 | 자동 아이템 처리 |
+| **ItemUsed** | 아이템 사용 | 아이템 우클릭/사용 | 아이템 기반 스크립트 |
+| **BlockPlaced** | 블록 설치 | 블록을 월드에 설치 | 건축 자동화 |
+| **BlockBroken** | 블록 파괴 | 블록을 파괴 | 채굴 자동화 |
+
+### 이벤트 구조 예시
+
+#### PlayerMessage 이벤트
+```json
+{
+  "header": {
+    "eventName": "PlayerMessage",
+    "messagePurpose": "event",
+    "version": 1
+  },
+  "body": {
+    "message": "안녕",
+    "sender": "플레이어이름",
+    "receiver": "",
+    "type": "chat",
+    "properties": {
+      "Message": "안녕",
+      "Sender": "플레이어이름"
+    }
+  }
+}
+```
+
+#### ItemAcquired 이벤트
+```json
+{
+  "header": {
+    "eventName": "ItemAcquired",
+    "messagePurpose": "event"
+  },
+  "body": {
+    "acquireMethod": 0,
+    "count": 1,
+    "item": {
+      "aux": 0,
+      "id": "minecraft:diamond",
+      "itemType": "diamond"
+    },
+    "player": {
+      "id": "player_id",
+      "name": "플레이어이름"
+    }
+  }
+}
+```
+
+#### BlockPlaced 이벤트
+```json
+{
+  "header": {
+    "eventName": "BlockPlaced",
+    "messagePurpose": "event"
+  },
+  "body": {
+    "block": {
+      "aux": 0,
+      "id": "minecraft:stone",
+      "namespace": "minecraft",
+      "type": "stone"
+    },
+    "count": 1,
+    "player": {
+      "name": "플레이어이름"
+    },
+    "placementMethod": 0,
+    "position": {
+      "x": 100,
+      "y": 64,
+      "z": 200
+    }
+  }
+}
+```
+
+### 이벤트 구독 방법
+
+Minecraft Bedrock Edition에서 이벤트를 구독하려면 WebSocket 연결 후 구독 메시지를 전송해야 합니다:
+
+```json
+{
+  "header": {
+    "requestId": "UUID",
+    "messagePurpose": "subscribe",
+    "version": 1,
+    "messageType": "commandRequest"
+  },
+  "body": {
+    "eventName": "PlayerMessage"
+  }
+}
+```
+
+### 지원되는 추가 이벤트
+
+| 이벤트 | 설명 |
+|--------|------|
+| PlayerTravelled | 플레이어 이동 |
+| PlayerTransform | 플레이어 위치/회전 변경 |
+| MobKilled | 몹 처치 |
+| MobSpawned | 몹 스폰 |
+| EntitySpawned | 엔티티 생성 |
+| PlayerDied | 플레이어 사망 |
+| ItemCrafted | 아이템 제작 |
+| ItemSmelted | 아이템 제련 |
+| BlockInteracted | 블록 상호작용 |
+| ItemInteracted | 아이템 상호작용 |
+
+### 이벤트 참고 문서
+
+| 리소스 | URL |
+|--------|-----|
+| Bedrock Protocol 이벤트 | https://github.com/Mojang/bedrock-protocol-docs |
+| Bedrock Wiki - Events | https://wiki.bedrock.dev/scripting/events.html |
+| Microsoft Learn - Events | https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/minecraft/server |
+
+**주의사항:**
+- 이벤트 구조는 Minecraft 버전에 따라 변경될 수 있습니다
+- 일부 이벤트는 특정 에디션(Education/Bedrock)에서만 지원됩니다
+- Code Connection 중단 후 일부 이벤트 구조가 변경되었을 수 있습니다
 
 ---
 
