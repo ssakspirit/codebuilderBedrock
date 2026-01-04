@@ -214,17 +214,18 @@ function initBlockly() {
             if (event.type == Blockly.Events.BLOCK_DELETE && event.oldXml) {
                 const deletedBlockType = event.oldXml.getAttribute('type');
                 const deletedBlockId = event.oldXml.getAttribute('id');
-                
+
                 console.log('블록 삭제 감지:', { type: deletedBlockType, id: deletedBlockId });
-                
-                if (deletedBlockType === 'on_chat_command' || 
-                    deletedBlockType === 'on_item_use' || 
+
+                if (deletedBlockType === 'on_chat_command' ||
+                    deletedBlockType === 'on_item_use' ||
                     deletedBlockType === 'on_block_placed' ||
-                    deletedBlockType === 'on_block_broken') {
+                    deletedBlockType === 'on_block_broken' ||
+                    deletedBlockType === 'on_mob_killed') {
                     // 삭제된 블록의 등록 제거를 서버에 요청
-                    socket.emit('removeBlockRegistration', { 
-                        blockType: deletedBlockType, 
-                        blockId: deletedBlockId 
+                    socket.emit('removeBlockRegistration', {
+                        blockType: deletedBlockType,
+                        blockId: deletedBlockId
                     });
                     console.log('서버로 블록 등록 제거 요청 전송:', { type: deletedBlockType, id: deletedBlockId });
                 }
@@ -282,11 +283,22 @@ function initBlockly() {
                 if (blockInput && blockInput.type === 'block_type') {
                     const blockType = blockInput.getFieldValue('BLOCK_TYPE');
                     const blockId = block.id;
-                    
+
                     console.log('블록 파괴 감지 블록 감지:', { blockType: blockType, blockId });
                     socket.emit('updateBlockBrokenCommand', { blockType: blockType, blockId });
                     console.log('서버로 블록 파괴 등록 전송 완료:', blockType);
                 }
+            });
+
+            // 몹 처치 감지 블록 처리
+            const mobKilledBlocks = blocks.filter(block => block.type === 'on_mob_killed');
+            mobKilledBlocks.forEach(block => {
+                const mobType = block.getFieldValue('MOB_TYPE');
+                const blockId = block.id;
+
+                console.log('몹 처치 감지 블록 감지:', { mobType: mobType, blockId });
+                socket.emit('updateMobKilledCommand', { mobType: mobType, blockId });
+                console.log('서버로 몹 처치 등록 전송 완료:', mobType);
             });
         }
     });
@@ -507,6 +519,70 @@ socket.on('executeBlockBrokenCommands', async function(blockId) {
     } else {
         console.log('❌ 블록 파괴 블록을 찾을 수 없음');
         showNotification('해당 블록 파괴 블록을 찾을 수 없습니다.');
+    }
+});
+
+// 몹 처치 이벤트 처리
+socket.on('executeMobKilledCommands', async function(blockId) {
+    if (isExecuting) {
+        showNotification('이미 실행 중입니다.');
+        return;
+    }
+
+    const blocks = workspace.getTopBlocks(true);
+    const eventBlocks = blocks.filter(block => block.type === 'on_mob_killed');
+
+    const targetBlock = eventBlocks.find(block => block.id === blockId);
+    if (targetBlock) {
+        try {
+            isExecuting = true;
+            shouldStop = false;
+            console.log('\n=== 몹 처치 실행 시작 ===');
+            console.log('블록 ID:', blockId);
+            console.log('------------------------');
+            showNotification('몹 처치 명령을 실행합니다...');
+
+            let code = '';
+            let nextBlock = targetBlock.getInputTargetBlock('NEXT');
+
+            while (nextBlock) {
+                if (shouldStop) {
+                    console.log('실행이 중단되었습니다.');
+                    showNotification('실행이 중단되었습니다.');
+                    isExecuting = false;
+                    return;
+                }
+
+                // 코드 생성기 재초기화
+                Blockly.JavaScript.init(workspace);
+
+                if (Blockly.JavaScript[nextBlock.type]) {
+                    code += Blockly.JavaScript[nextBlock.type](nextBlock);
+                } else {
+                    console.warn(`블록 타입 "${nextBlock.type}"에 대한 코드 생성기가 없습니다.`);
+                }
+
+                nextBlock = nextBlock.getNextBlock();
+            }
+
+            // 디버깅을 위한 생성된 코드 출력
+            console.log('생성된 코드:', code);
+
+            await eval('(async () => { ' + code + ' })()');
+            console.log('------------------------');
+            console.log('=== 실행 완료 ===\n');
+            showNotification('몹 처치 실행이 완료되었습니다.');
+        } catch (e) {
+            console.log('❌ 실행 중 오류 발생');
+            console.error('오류 내용:', e);
+            showNotification('실행 중 오류가 발생했습니다: ' + e.message);
+        } finally {
+            isExecuting = false;
+            shouldStop = false;
+        }
+    } else {
+        console.log('❌ 몹 처치 블록을 찾을 수 없음');
+        showNotification('해당 몹 처치 블록을 찾을 수 없습니다.');
     }
 });
 

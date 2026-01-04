@@ -459,6 +459,7 @@ async function start() {
             let itemBlocks = new Map(); // item -> {blockId, socket}
             let blockPlacedBlocks = new Map(); // blockType -> {blockId, socket}
             let blockBrokenBlocks = new Map(); // blockType -> {blockId, socket}
+            let mobKilledBlocks = new Map(); // mobType -> {blockId, socket}
             let pendingBlockDetect = false;
             let blockDetectResponseCount = 0;
 
@@ -628,6 +629,54 @@ async function start() {
                     }
                 });
 
+                // 몹 처치 명령어 업데이트 처리
+                clientSocket.on('updateMobKilledCommand', (data) => {
+                    console.log('🔍 updateMobKilledCommand 수신된 데이터:', data);
+                    if (data && data.mobType) {
+                        // 같은 블록 ID를 가진 이전 몹들을 제거
+                        const mobsToRemove = [];
+                        for (let [mobType, blockData] of mobKilledBlocks.entries()) {
+                            if (blockData.blockId === data.blockId) {
+                                mobsToRemove.push(mobType);
+                            }
+                        }
+                        mobsToRemove.forEach(mobType => {
+                            mobKilledBlocks.delete(mobType);
+                            console.log('🗑️ 이전 몹 처치 감지 제거:', mobType);
+                        });
+
+                        // 이미 같은 몹이 등록되어 있는지 확인
+                        if (mobKilledBlocks.has(data.mobType)) {
+                            console.log('❌ 중복 몹 처치 등록 시도 거부:', data.mobType);
+                            console.log('이미 등록된 블록 ID:', mobKilledBlocks.get(data.mobType).blockId);
+                            clientSocket.emit('mobKilledRegistrationError', {
+                                error: '같은 몹 처치에 대한 명령이 이미 존재합니다.',
+                                mobType: data.mobType,
+                                existingBlockId: mobKilledBlocks.get(data.mobType).blockId
+                            });
+                            return;
+                        }
+
+                        // 새로운 몹 처치 등록
+                        mobKilledBlocks.set(data.mobType, {
+                            blockId: data.blockId,
+                            socket: clientSocket
+                        });
+
+                        console.log('\n=== 몹 처치 감지 등록 ===');
+                        console.log('등록된 몹:', data.mobType);
+                        console.log('블록 ID:', data.blockId);
+                        console.log('총 등록된 몹 수:', mobKilledBlocks.size);
+                        console.log('------------------------');
+                        for (let [mobType, blockData] of mobKilledBlocks.entries()) {
+                            console.log(`• "${mobType}" (ID: ${blockData.blockId})`);
+                        }
+                        console.log('======================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 몹 처치 데이터:', data);
+                    }
+                });
+
                 // 블록 등록 제거 처리
                 clientSocket.on('removeBlockRegistration', (data) => {
                     console.log('🗑️ 블록 등록 제거 요청 수신:', data);
@@ -677,12 +726,24 @@ async function start() {
                             }
                         }
                     }
-                    
+
+                    // 몹 처치 감지 블록 제거
+                    if (blockType === 'on_mob_killed') {
+                        for (let [mobType, blockData] of mobKilledBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                mobKilledBlocks.delete(mobType);
+                                console.log('✅ 몹 처치 감지 제거:', mobType);
+                                break;
+                            }
+                        }
+                    }
+
                     console.log('현재 등록 상태:');
                     console.log('- 채팅 명령어:', commandBlocks.size + '개');
                     console.log('- 아이템 사용:', itemBlocks.size + '개');
                     console.log('- 블록 설치:', blockPlacedBlocks.size + '개');
                     console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
+                    console.log('- 몹 처치:', mobKilledBlocks.size + '개');
                 });
 
                 // 일반 명령어 실행 처리 (주로 아이템 지급)
@@ -2814,7 +2875,48 @@ async function start() {
                         }
                         console.log('==========================\n');
                     }
-                    
+
+                    // 몹 처치 이벤트 처리
+                    if (data.header.eventName === 'MobKilled') {
+                        console.log('\n=== 몹 처치 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+
+                        // 몹 타입 추출 (MobKilled 이벤트 구조에 맞게)
+                        let mobType = null;
+                        if (data.body.mob && data.body.mob.type) {
+                            mobType = data.body.mob.type;
+                        } else if (data.body.mobType) {
+                            mobType = data.body.mobType;
+                        } else if (data.body.victim && data.body.victim.type) {
+                            mobType = data.body.victim.type;
+                        }
+
+                        console.log('처치한 몹:', mobType);
+
+                        if (mobType) {
+                            // 특정 몹에 대한 등록 확인
+                            const specificBlockData = mobKilledBlocks.get(mobType);
+                            // "all" (모든 몹)에 대한 등록 확인
+                            const allBlockData = mobKilledBlocks.get('all');
+
+                            if (specificBlockData) {
+                                console.log('✅ 몹 처치 코드 실행 시작 (특정 몹:', mobType + ')');
+                                console.log('------------------------');
+                                specificBlockData.socket.emit('executeMobKilledCommands', specificBlockData.blockId);
+                            } else if (allBlockData) {
+                                console.log('✅ 몹 처치 코드 실행 시작 (모든 몹)');
+                                console.log('------------------------');
+                                allBlockData.socket.emit('executeMobKilledCommands', allBlockData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 몹 처치 코드가 없습니다');
+                                console.log('등록된 몹들:', Array.from(mobKilledBlocks.keys()));
+                            }
+                        } else {
+                            console.log('❌ 몹 타입을 찾을 수 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+
                     // 추가 아이템 관련 이벤트 처리
                     if (['PlayerInteract', 'ItemUsed', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
                         console.log(`\n=== ${data.header.eventName} 이벤트 수신 ===`);
@@ -2996,6 +3098,19 @@ async function start() {
                 },
                 "body": {
                     "eventName": "BlockBroken"
+                }
+            }));
+
+            // MobKilled 이벤트 구독 (몹 처치)
+            socket.send(JSON.stringify({
+                "header": {
+                    "version": 1,
+                    "requestId": uuid.v4(),
+                    "messageType": "commandRequest",
+                    "messagePurpose": "subscribe"
+                },
+                "body": {
+                    "eventName": "MobKilled"
                 }
             }));
 

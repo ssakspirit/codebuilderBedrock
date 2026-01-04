@@ -1514,4 +1514,32 @@ Blockly.Blocks['variables_set'].init = function() {
     }
 };
 
- 
+// 몹 처치 감지 블록 정의
+Blockly.Blocks['on_mob_killed'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("🗡️ 몹 처치:")
+            .appendField(new Blockly.FieldDropdown([
+                ["모든 몹", "all"],
+                ["좀비", "zombie"],
+                ["스켈레톤", "skeleton"],
+                ["크리퍼", "creeper"],
+                ["거미", "spider"],
+                ["엔더맨", "enderman"],
+                ["위더 스켈레톤", "wither_skeleton"],
+                ["블레이즈", "blaze"],
+                ["슬라임", "slime"],
+                ["가스트", "ghast"],
+                ["돼지", "pig"],
+                ["소", "cow"],
+                ["양", "sheep"],
+                ["닭", "chicken"]
+            ]), "MOB_TYPE");
+        this.appendStatementInput('NEXT')
+            .setCheck(null);
+        this.setDeletable(true);
+        this.setTooltip("플레이어가 특정 몹을 처치할 때 실행됩니다");
+        this.setStyle('hat_blocks');
+    }
+};
+
