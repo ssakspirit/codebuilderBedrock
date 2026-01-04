@@ -297,8 +297,17 @@ function initBlockly() {
                 const mobTypeBlock = block.getInputTargetBlock('MOB_TYPE');
                 let mobType = 'all'; // 기본값: 모든 몹
 
-                if (mobTypeBlock && mobTypeBlock.type === 'mob_type') {
-                    mobType = mobTypeBlock.getFieldValue('MOB_TYPE');
+                console.log('🔍 [디버그] 몹 처치 블록 분석:');
+                console.log('  - mobTypeBlock 존재:', !!mobTypeBlock);
+                if (mobTypeBlock) {
+                    console.log('  - mobTypeBlock.type:', mobTypeBlock.type);
+                    console.log('  - isShadow:', mobTypeBlock.isShadow());
+                    console.log('  - 모든 필드:', Object.keys(mobTypeBlock.inputList));
+
+                    if (mobTypeBlock.type === 'mob_type') {
+                        mobType = mobTypeBlock.getFieldValue('MOB_TYPE');
+                        console.log('  - MOB_TYPE 필드 값:', mobType);
+                    }
                 }
 
                 const blockId = block.id;
