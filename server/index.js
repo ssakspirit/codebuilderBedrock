@@ -2891,16 +2891,30 @@ async function start() {
                             mobType = data.body.victim.type;
                         }
 
-                        console.log('처치한 몹:', mobType);
+                        console.log('🔍 [원본] 처치한 몹:', mobType);
+                        console.log('🔍 [등록된 몹들]:', Array.from(mobKilledBlocks.keys()));
 
                         if (mobType) {
+                            // minecraft: 접두사 제거 및 정규화
+                            let normalizedMobType = mobType;
+                            if (normalizedMobType.includes(':')) {
+                                normalizedMobType = normalizedMobType.split(':')[1];
+                            }
+                            normalizedMobType = normalizedMobType.toLowerCase();
+
+                            console.log('🔍 [정규화] 처치한 몹:', normalizedMobType);
+
                             // 특정 몹에 대한 등록 확인
-                            const specificBlockData = mobKilledBlocks.get(mobType);
+                            const specificBlockData = mobKilledBlocks.get(normalizedMobType);
                             // "all" (모든 몹)에 대한 등록 확인
                             const allBlockData = mobKilledBlocks.get('all');
 
+                            console.log('🔍 [매칭 결과]');
+                            console.log('  - 특정 몹 매칭:', !!specificBlockData, '(찾는 키:', normalizedMobType + ')');
+                            console.log('  - 모든 몹 매칭:', !!allBlockData);
+
                             if (specificBlockData) {
-                                console.log('✅ 몹 처치 코드 실행 시작 (특정 몹:', mobType + ')');
+                                console.log('✅ 몹 처치 코드 실행 시작 (특정 몹:', normalizedMobType + ')');
                                 console.log('------------------------');
                                 specificBlockData.socket.emit('executeMobKilledCommands', specificBlockData.blockId);
                             } else if (allBlockData) {
@@ -2909,7 +2923,6 @@ async function start() {
                                 allBlockData.socket.emit('executeMobKilledCommands', allBlockData.blockId);
                             } else {
                                 console.log('❌ 일치하는 몹 처치 코드가 없습니다');
-                                console.log('등록된 몹들:', Array.from(mobKilledBlocks.keys()));
                             }
                         } else {
                             console.log('❌ 몹 타입을 찾을 수 없습니다');
