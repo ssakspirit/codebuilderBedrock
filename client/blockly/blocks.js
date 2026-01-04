@@ -1529,8 +1529,8 @@ Blockly.Blocks['on_mob_killed'] = {
             .setCheck(null);
         this.setDeletable(true);
         this.setTooltip("플레이어가 특정 몹을 처치할 때 실행됩니다");
-        this.setColour('#764bbc');
         this.setStyle('hat_blocks');
+        this.setColour('#764bbc');
     }
 };
 
