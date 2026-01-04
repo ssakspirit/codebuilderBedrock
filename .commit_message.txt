@@ -1,1 +1,1 @@
-📚 레퍼런스 문서 확장 - 핵심 레퍼런스 요약표, 이벤트 시스템 상세, MakeCode 등 유사 프로젝트 추가 (docs/REFERENCES.md)
+🛠️ Claude 스킬 6종 추가 - 블록/이벤트/명령어 추가, 디버깅, 버그 수정, 테스트 자동화 스킬 (.claude/commands/)
