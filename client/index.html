@@ -278,9 +278,15 @@
                     <shadow type="block_type"></shadow>
                 </value>
             </block>
-            <block type="on_mob_killed"></block>
         </category>
         <category name="몹" colour="#764bbc">
+            <block type="on_mob_killed">
+                <value name="MOB_TYPE">
+                    <shadow type="mob_type">
+                        <field name="MOB_TYPE">all</field>
+                    </shadow>
+                </value>
+            </block>
             <block type="mob_summon">
                 <value name="MOB_TYPE">
                     <shadow type="mob_type"></shadow>

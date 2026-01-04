@@ -237,6 +237,9 @@ const MINECRAFT_BLOCKS = [
  * 카테고리별로 정리된 몹 리스트
  */
 const MINECRAFT_MOBS = [
+    // 전체
+    ["모든 몹", "all"],
+
     // 우호적 몹
     ["소", "cow"],
     ["돼지", "pig"],
@@ -1518,27 +1521,15 @@ Blockly.Blocks['variables_set'].init = function() {
 Blockly.Blocks['on_mob_killed'] = {
     init: function() {
         this.appendDummyInput()
-            .appendField("🗡️ 몹 처치:")
-            .appendField(new Blockly.FieldDropdown([
-                ["모든 몹", "all"],
-                ["좀비", "zombie"],
-                ["스켈레톤", "skeleton"],
-                ["크리퍼", "creeper"],
-                ["거미", "spider"],
-                ["엔더맨", "enderman"],
-                ["위더 스켈레톤", "wither_skeleton"],
-                ["블레이즈", "blaze"],
-                ["슬라임", "slime"],
-                ["가스트", "ghast"],
-                ["돼지", "pig"],
-                ["소", "cow"],
-                ["양", "sheep"],
-                ["닭", "chicken"]
-            ]), "MOB_TYPE");
+            .appendField("몹 처치:");
+        this.appendValueInput("MOB_TYPE")
+            .setCheck(["String", "MobType"])
+            .appendField("몹");
         this.appendStatementInput('NEXT')
             .setCheck(null);
         this.setDeletable(true);
         this.setTooltip("플레이어가 특정 몹을 처치할 때 실행됩니다");
+        this.setColour('#764bbc');
         this.setStyle('hat_blocks');
     }
 };

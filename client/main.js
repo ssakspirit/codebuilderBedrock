@@ -293,7 +293,14 @@ function initBlockly() {
             // 몹 처치 감지 블록 처리
             const mobKilledBlocks = blocks.filter(block => block.type === 'on_mob_killed');
             mobKilledBlocks.forEach(block => {
-                const mobType = block.getFieldValue('MOB_TYPE');
+                // MOB_TYPE 입력에서 연결된 블록 가져오기
+                const mobTypeBlock = block.getInputTargetBlock('MOB_TYPE');
+                let mobType = 'all'; // 기본값: 모든 몹
+
+                if (mobTypeBlock && mobTypeBlock.type === 'mob_type') {
+                    mobType = mobTypeBlock.getFieldValue('MOB_TYPE');
+                }
+
                 const blockId = block.id;
 
                 console.log('몹 처치 감지 블록 감지:', { mobType: mobType, blockId });
