@@ -1,1 +1,1 @@
-📚 아키텍처 문서 추가 - 시스템 구조, 데이터 흐름, 이벤트 시스템, 블록 실행 과정 등 상세 설명 포함 (docs/ARCHITECTURE.md)
+📚 개발 레퍼런스 문서 추가 - Code Connection API, Agent 명령어, Blockly 가이드, 프로토콜 문서 등 모든 참고 자료 정리 (docs/REFERENCES.md)
