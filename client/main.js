@@ -346,6 +346,37 @@ socket.on('blockBrokenRegistrationError', function(data) {
     showNotification(`❌ ${data.blockType} 블록 파괴는 이미 등록되어 있습니다!`);
 });
 
+// 몹 처치 등록 에러 처리
+socket.on('mobKilledRegistrationError', function(data) {
+    console.error('❌ 몹 처치 등록 에러:', data.error);
+    console.error('중복 몹:', data.mobType);
+    const mobTypeDisplay = data.mobType === 'all' ? '모든 몹' : data.mobType;
+    showNotification(`❌ ${mobTypeDisplay} 처치는 이미 등록되어 있습니다!`);
+
+    // 중복 블록 자동 삭제
+    setTimeout(() => {
+        const blocks = workspace.getTopBlocks(true);
+        const duplicateBlocks = blocks.filter(block =>
+            block.type === 'on_mob_killed' &&
+            block.id !== data.existingBlockId
+        );
+
+        duplicateBlocks.forEach(block => {
+            const mobTypeBlock = block.getInputTargetBlock('MOB_TYPE');
+            let mobType = 'all';
+            if (mobTypeBlock && mobTypeBlock.type === 'mob_type') {
+                mobType = mobTypeBlock.getFieldValue('MOB_TYPE');
+            }
+
+            // 같은 몹 타입의 중복 블록 찾아서 삭제
+            if (mobType === data.mobType) {
+                console.log('🗑️ 중복 블록 자동 삭제:', block.id);
+                block.dispose(true);
+            }
+        });
+    }, 100);
+});
+
 // 아이템 사용 이벤트 처리
 socket.on('executeItemCommands', async function(blockId) {
     if (isExecuting) {
