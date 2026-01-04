@@ -323,12 +323,13 @@ function initBlockly() {
             itemUsedBlocks.forEach(block => {
                 // ITEM 입력에서 연결된 블록 가져오기
                 const itemBlock = block.getInputTargetBlock('ITEM');
-                let item = 'all'; // 기본값: 모든 아이템
+                let item = null;
 
                 console.log('🔍 [디버그] 아이템 사용 블록 분석:');
                 console.log('  - itemBlock 존재:', !!itemBlock);
                 if (itemBlock) {
                     console.log('  - itemBlock.type:', itemBlock.type);
+                    console.log('  - itemBlock.isShadow():', itemBlock.isShadow());
 
                     if (itemBlock.type === 'item_type') {
                         item = itemBlock.getFieldValue('ITEM');
@@ -336,9 +337,15 @@ function initBlockly() {
                     }
                 }
 
+                // item이 여전히 null이면 기본값 설정
+                if (!item) {
+                    item = 'all';
+                    console.log('  - item이 null이므로 기본값 설정: all');
+                }
+
                 const blockId = block.id;
 
-                console.log('아이템 사용 감지 블록 감지:', { item: item, blockId });
+                console.log('✅ 최종 전송 데이터:', { item: item, blockId });
                 socket.emit('updateItemUsedCommand', { item: item, blockId });
                 console.log('서버로 아이템 사용 등록 전송 완료:', item);
             });
