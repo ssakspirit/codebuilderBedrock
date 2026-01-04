@@ -460,6 +460,7 @@ async function start() {
             let blockPlacedBlocks = new Map(); // blockType -> {blockId, socket}
             let blockBrokenBlocks = new Map(); // blockType -> {blockId, socket}
             let mobKilledBlocks = new Map(); // mobType -> {blockId, socket}
+            let itemUsedBlocks = new Map(); // item -> {blockId, socket}
             let pendingBlockDetect = false;
             let blockDetectResponseCount = 0;
 
@@ -677,6 +678,54 @@ async function start() {
                     }
                 });
 
+                // 아이템 사용 명령어 업데이트 처리
+                clientSocket.on('updateItemUsedCommand', (data) => {
+                    console.log('🔍 updateItemUsedCommand 수신된 데이터:', data);
+                    if (data && data.item) {
+                        // 같은 블록 ID를 가진 이전 아이템들을 제거
+                        const itemsToRemove = [];
+                        for (let [item, blockData] of itemUsedBlocks.entries()) {
+                            if (blockData.blockId === data.blockId) {
+                                itemsToRemove.push(item);
+                            }
+                        }
+                        itemsToRemove.forEach(item => {
+                            itemUsedBlocks.delete(item);
+                            console.log('🗑️ 이전 아이템 사용 감지 제거:', item);
+                        });
+
+                        // 이미 같은 아이템이 등록되어 있는지 확인
+                        if (itemUsedBlocks.has(data.item)) {
+                            console.log('❌ 중복 아이템 사용 등록 시도 거부:', data.item);
+                            console.log('이미 등록된 블록 ID:', itemUsedBlocks.get(data.item).blockId);
+                            clientSocket.emit('itemUsedRegistrationError', {
+                                error: '같은 아이템 사용에 대한 명령이 이미 존재합니다.',
+                                item: data.item,
+                                existingBlockId: itemUsedBlocks.get(data.item).blockId
+                            });
+                            return;
+                        }
+
+                        // 새로운 아이템 사용 등록
+                        itemUsedBlocks.set(data.item, {
+                            blockId: data.blockId,
+                            socket: clientSocket
+                        });
+
+                        console.log('\n=== 아이템 사용 감지 등록 ===');
+                        console.log('등록된 아이템:', data.item);
+                        console.log('블록 ID:', data.blockId);
+                        console.log('총 등록된 아이템 수:', itemUsedBlocks.size);
+                        console.log('------------------------');
+                        for (let [item, blockData] of itemUsedBlocks.entries()) {
+                            console.log(`• "${item}" (ID: ${blockData.blockId})`);
+                        }
+                        console.log('======================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 아이템 사용 데이터:', data);
+                    }
+                });
+
                 // 블록 등록 제거 처리
                 clientSocket.on('removeBlockRegistration', (data) => {
                     console.log('🗑️ 블록 등록 제거 요청 수신:', data);
@@ -738,9 +787,21 @@ async function start() {
                         }
                     }
 
+                    // 아이템 사용 감지 블록 제거
+                    if (blockType === 'on_item_used') {
+                        for (let [item, blockData] of itemUsedBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                itemUsedBlocks.delete(item);
+                                console.log('✅ 아이템 사용 감지 제거:', item);
+                                break;
+                            }
+                        }
+                    }
+
                     console.log('현재 등록 상태:');
                     console.log('- 채팅 명령어:', commandBlocks.size + '개');
-                    console.log('- 아이템 사용:', itemBlocks.size + '개');
+                    console.log('- 아이템 획득:', itemBlocks.size + '개');
+                    console.log('- 아이템 사용:', itemUsedBlocks.size + '개');
                     console.log('- 블록 설치:', blockPlacedBlocks.size + '개');
                     console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
                     console.log('- 몹 처치:', mobKilledBlocks.size + '개');
@@ -2930,8 +2991,62 @@ async function start() {
                         console.log('==========================\n');
                     }
 
+                    // 아이템 사용 이벤트 처리 (우클릭)
+                    if (data.header.eventName === 'ItemUsed') {
+                        console.log('\n=== 아이템 사용 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+
+                        // 아이템 타입 추출
+                        let itemType = null;
+                        if (data.body.item && data.body.item.id) {
+                            itemType = data.body.item.id;
+                        } else if (data.body.item && data.body.item.type) {
+                            itemType = data.body.item.type;
+                        } else if (data.body.itemType) {
+                            itemType = data.body.itemType;
+                        }
+
+                        console.log('🔍 [원본] 사용한 아이템:', itemType);
+                        console.log('🔍 [등록된 아이템들]:', Array.from(itemUsedBlocks.keys()));
+
+                        if (itemType) {
+                            // minecraft: 접두사 제거 및 정규화
+                            let normalizedItemType = itemType;
+                            if (normalizedItemType.includes(':')) {
+                                normalizedItemType = normalizedItemType.split(':')[1];
+                            }
+                            normalizedItemType = normalizedItemType.toLowerCase();
+
+                            console.log('🔍 [정규화] 사용한 아이템:', normalizedItemType);
+
+                            // 특정 아이템에 대한 등록 확인
+                            const specificBlockData = itemUsedBlocks.get(normalizedItemType);
+                            // "all" (모든 아이템)에 대한 등록 확인
+                            const allBlockData = itemUsedBlocks.get('all');
+
+                            console.log('🔍 [매칭 결과]');
+                            console.log('  - 특정 아이템 매칭:', !!specificBlockData, '(찾는 키:', normalizedItemType + ')');
+                            console.log('  - 모든 아이템 매칭:', !!allBlockData);
+
+                            if (specificBlockData) {
+                                console.log('✅ 아이템 사용 코드 실행 시작 (특정 아이템:', normalizedItemType + ')');
+                                console.log('------------------------');
+                                specificBlockData.socket.emit('executeItemUsedCommands', specificBlockData.blockId);
+                            } else if (allBlockData) {
+                                console.log('✅ 아이템 사용 코드 실행 시작 (모든 아이템)');
+                                console.log('------------------------');
+                                allBlockData.socket.emit('executeItemUsedCommands', allBlockData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 아이템 사용 코드가 없습니다');
+                            }
+                        } else {
+                            console.log('❌ 아이템 타입을 찾을 수 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+
                     // 추가 아이템 관련 이벤트 처리
-                    if (['PlayerInteract', 'ItemUsed', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
+                    if (['PlayerInteract', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
                         console.log(`\n=== ${data.header.eventName} 이벤트 수신 ===`);
                         console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
                         console.log('===========================================\n');

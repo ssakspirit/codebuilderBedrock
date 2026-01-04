@@ -836,6 +836,23 @@ Blockly.Blocks['camera_pos'] = {
     }
 };
 
+// 아이템 사용 감지 블록 정의 (우클릭)
+Blockly.Blocks['on_item_used'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("아이템 사용:");
+        this.appendValueInput("ITEM")
+            .setCheck(["String", "ItemType"])
+            .appendField("아이템");
+        this.appendStatementInput('NEXT')
+            .setCheck(null);
+        this.setDeletable(true);
+        this.setTooltip("플레이어가 특정 아이템을 사용(우클릭)할 때 실행됩니다");
+        this.setStyle('hat_blocks');
+        this.setColour('#60A5FA');
+    }
+};
+
 
 // 블록 설치 명령 블록 정의
 Blockly.Blocks['set_block'] = {
