@@ -836,18 +836,18 @@ Blockly.Blocks['camera_pos'] = {
     }
 };
 
-// 아이템 사용 감지 블록 정의 (우클릭)
+// 아이템 사용 감지 블록 정의
 Blockly.Blocks['on_item_used'] = {
     init: function() {
-        this.appendDummyInput()
-            .appendField("아이템 사용(우클릭):");
         this.appendValueInput("ITEM")
             .setCheck(["String", "ItemType"])
             .appendField("아이템");
+        this.appendDummyInput()
+            .appendField("을 사용하면");
         this.appendStatementInput('NEXT')
             .setCheck(null);
         this.setDeletable(true);
-        this.setTooltip("플레이어가 특정 아이템을 들고 우클릭할 때 실행됩니다");
+        this.setTooltip("플레이어가 특정 아이템을 사용할 때 실행됩니다 (음식 먹기, 포션 마시기, 도구 사용 등)");
         this.setStyle('hat_blocks');
         this.setColour('#60A5FA');
     }
