@@ -734,7 +734,15 @@ async function start() {
                         const travelType = data.travelType;
                         const blockId = data.blockId;
 
-                        // 이미 등록된 동작 타입이 있는지 확인
+                        // 1단계: 같은 blockId로 등록된 다른 동작 타입 모두 제거
+                        for (let [registeredType, blockData] of playerTravelledBlocks.entries()) {
+                            if (blockData.blockId === blockId && registeredType !== travelType) {
+                                playerTravelledBlocks.delete(registeredType);
+                                console.log('🗑️ 블록 ID', blockId, '의 이전 등록 제거:', registeredType);
+                            }
+                        }
+
+                        // 2단계: 이미 등록된 동작 타입이 있는지 확인 (다른 블록의 경우)
                         if (playerTravelledBlocks.has(travelType)) {
                             const existingBlock = playerTravelledBlocks.get(travelType);
 
@@ -753,7 +761,7 @@ async function start() {
                             return;
                         }
 
-                        // 새로운 플레이어 동작 등록
+                        // 3단계: 새로운 플레이어 동작 등록
                         playerTravelledBlocks.set(travelType, {
                             blockId: blockId,
                             socket: clientSocket
@@ -762,6 +770,7 @@ async function start() {
                         console.log('\n=== 플레이어 동작 등록 ===');
                         console.log('동작 타입:', travelType);
                         console.log('블록 ID:', blockId);
+                        console.log('현재 등록된 동작들:', Array.from(playerTravelledBlocks.keys()));
                         console.log('========================\n');
                     } else {
                         console.log('❌ 유효하지 않은 플레이어 동작 데이터:', data);
