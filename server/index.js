@@ -3045,8 +3045,69 @@ async function start() {
                         console.log('==========================\n');
                     }
 
+                    // PlayerInteract 이벤트 처리 (우클릭)
+                    if (data.header.eventName === 'PlayerInteract') {
+                        console.log('\n=== PlayerInteract 이벤트 수신 (우클릭 감지) ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+
+                        // 아이템 타입 추출
+                        let itemType = null;
+                        if (data.body.item && data.body.item.id) {
+                            itemType = data.body.item.id;
+                        } else if (data.body.item && data.body.item.type) {
+                            itemType = data.body.item.type;
+                        } else if (data.body.itemType) {
+                            itemType = data.body.itemType;
+                        }
+
+                        console.log('🔍 [원본] 사용한 아이템:', itemType);
+                        console.log('🔍 [등록된 아이템들]:', Array.from(itemUsedBlocks.keys()));
+
+                        if (itemType) {
+                            // minecraft: 접두사 제거 및 정규화
+                            let normalizedItemType = itemType;
+                            if (normalizedItemType.includes(':')) {
+                                normalizedItemType = normalizedItemType.split(':')[1];
+                            }
+                            normalizedItemType = normalizedItemType.toLowerCase();
+
+                            console.log('🔍 [정규화] 사용한 아이템:', normalizedItemType);
+
+                            // 특정 아이템에 대한 등록 확인
+                            const specificBlockData = itemUsedBlocks.get(normalizedItemType);
+                            // "all" (모든 아이템)에 대한 등록 확인
+                            const allBlockData = itemUsedBlocks.get('all');
+
+                            console.log('🔍 [매칭 결과]');
+                            console.log('  - 특정 아이템 매칭:', !!specificBlockData, '(찾는 키:', normalizedItemType + ')');
+                            console.log('  - 모든 아이템 매칭:', !!allBlockData);
+
+                            if (specificBlockData) {
+                                console.log('✅ 아이템 사용 코드 실행 시작 (특정 아이템:', normalizedItemType + ')');
+                                console.log('------------------------');
+                                specificBlockData.socket.emit('executeItemUsedCommands', specificBlockData.blockId);
+                            } else if (allBlockData) {
+                                console.log('✅ 아이템 사용 코드 실행 시작 (모든 아이템)');
+                                console.log('------------------------');
+                                allBlockData.socket.emit('executeItemUsedCommands', allBlockData.blockId);
+                            } else {
+                                console.log('❌ 일치하는 아이템 사용 코드가 없습니다');
+                            }
+                        } else {
+                            console.log('⚠️ 아이템 없이 우클릭 (손 빈 상태)');
+                            // 손이 빈 상태라도 "all"에 등록되어 있으면 실행
+                            const allBlockData = itemUsedBlocks.get('all');
+                            if (allBlockData) {
+                                console.log('✅ 아이템 사용 코드 실행 시작 (모든 아이템 - 빈 손)');
+                                console.log('------------------------');
+                                allBlockData.socket.emit('executeItemUsedCommands', allBlockData.blockId);
+                            }
+                        }
+                        console.log('==========================\n');
+                    }
+
                     // 추가 아이템 관련 이벤트 처리
-                    if (['PlayerInteract', 'PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
+                    if (['PlayerInteractWithEntity', 'ItemSelected'].includes(data.header.eventName)) {
                         console.log(`\n=== ${data.header.eventName} 이벤트 수신 ===`);
                         console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
                         console.log('===========================================\n');
