@@ -315,6 +315,12 @@ Blockly.JavaScript.forBlock['on_block_broken'] = function(block) {
     return nextCode;
 };
 
+// 플레이어 동작 감지 코드 생성기 (Hat 블록 - 코드 생성하지 않음)
+Blockly.JavaScript.forBlock['on_player_travelled'] = function(block) {
+    const nextCode = Blockly.JavaScript.statementToCode(block, 'NEXT');
+    return nextCode;
+};
+
 // 아이템 받기 코드 생성기
 Blockly.JavaScript['give_item'] = function(block) {
     const target = Blockly.JavaScript.valueToCode(block, 'TARGET', Blockly.JavaScript.ORDER_ATOMIC) || '"@s"';

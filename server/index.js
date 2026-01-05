@@ -461,6 +461,7 @@ async function start() {
             let blockBrokenBlocks = new Map(); // blockType -> {blockId, socket}
             let mobKilledBlocks = new Map(); // mobType -> {blockId, socket}
             let itemUsedBlocks = new Map(); // item -> {blockId, socket}
+            let playerTravelledBlocks = new Map(); // travelType -> {blockId, socket}
             let pendingBlockDetect = false;
             let blockDetectResponseCount = 0;
 
@@ -726,6 +727,47 @@ async function start() {
                     }
                 });
 
+                // 플레이어 동작 감지 명령어 업데이트 처리
+                clientSocket.on('updatePlayerTravelledCommand', (data) => {
+                    console.log('🔍 updatePlayerTravelledCommand 수신된 데이터:', data);
+                    if (data && data.travelType && data.blockId) {
+                        const travelType = data.travelType;
+                        const blockId = data.blockId;
+
+                        // 이미 등록된 동작 타입이 있는지 확인
+                        if (playerTravelledBlocks.has(travelType)) {
+                            const existingBlock = playerTravelledBlocks.get(travelType);
+
+                            // 같은 블록 ID면 무시
+                            if (existingBlock.blockId === blockId) {
+                                console.log('⚠️ 이미 등록된 블록입니다:', travelType);
+                                return;
+                            }
+
+                            // 다른 블록이 이미 등록되어 있으면 오류 전송
+                            console.log('❌ 이미 등록된 동작 타입:', travelType);
+                            clientSocket.emit('playerTravelledRegistrationError', {
+                                travelType: travelType,
+                                message: `이미 "${travelType}" 동작이 등록되어 있습니다.`
+                            });
+                            return;
+                        }
+
+                        // 새로운 플레이어 동작 등록
+                        playerTravelledBlocks.set(travelType, {
+                            blockId: blockId,
+                            socket: clientSocket
+                        });
+
+                        console.log('\n=== 플레이어 동작 등록 ===');
+                        console.log('동작 타입:', travelType);
+                        console.log('블록 ID:', blockId);
+                        console.log('========================\n');
+                    } else {
+                        console.log('❌ 유효하지 않은 플레이어 동작 데이터:', data);
+                    }
+                });
+
                 // 블록 등록 제거 처리
                 clientSocket.on('removeBlockRegistration', (data) => {
                     console.log('🗑️ 블록 등록 제거 요청 수신:', data);
@@ -798,6 +840,17 @@ async function start() {
                         }
                     }
 
+                    // 플레이어 동작 감지 블록 제거
+                    if (blockType === 'on_player_travelled') {
+                        for (let [travelType, blockData] of playerTravelledBlocks.entries()) {
+                            if (blockData.blockId === blockId) {
+                                playerTravelledBlocks.delete(travelType);
+                                console.log('✅ 플레이어 동작 감지 제거:', travelType);
+                                break;
+                            }
+                        }
+                    }
+
                     console.log('현재 등록 상태:');
                     console.log('- 채팅 명령어:', commandBlocks.size + '개');
                     console.log('- 아이템 획득:', itemBlocks.size + '개');
@@ -805,6 +858,7 @@ async function start() {
                     console.log('- 블록 설치:', blockPlacedBlocks.size + '개');
                     console.log('- 블록 파괴:', blockBrokenBlocks.size + '개');
                     console.log('- 몹 처치:', mobKilledBlocks.size + '개');
+                    console.log('- 플레이어 동작:', playerTravelledBlocks.size + '개');
                 });
 
                 // 일반 명령어 실행 처리 (주로 아이템 지급)
@@ -2999,6 +3053,58 @@ async function start() {
                         console.log('==========================\n');
                     }
 
+                    // 플레이어 동작 감지 이벤트 처리
+                    if (data.header.eventName === 'PlayerTravelled') {
+                        console.log('\n=== 플레이어 동작 이벤트 수신 ===');
+                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
+
+                        // 플레이어 이름 추출
+                        let playerName = 'Unknown';
+                        if (data.body.player && data.body.player.name) {
+                            playerName = data.body.player.name;
+                        }
+
+                        // 이동 타입 추출 (travelMethod)
+                        let travelMethod = data.body.travelMethod;
+
+                        // travelMethod 숫자를 문자열로 변환
+                        const travelTypeMap = {
+                            0: 'Walk',
+                            1: 'SwimWater',
+                            2: 'SwimLava',
+                            3: 'Fall',
+                            4: 'Climb',
+                            5: 'Fly',
+                            6: 'Riding',
+                            7: 'Sneak',
+                            8: 'Sprint',
+                            9: 'Bounce'
+                        };
+
+                        const travelType = travelTypeMap[travelMethod] || 'Walk';
+
+                        console.log('🔍 플레이어:', playerName);
+                        console.log('🔍 동작 타입 (숫자):', travelMethod);
+                        console.log('🔍 동작 타입 (문자):', travelType);
+                        console.log('🔍 등록된 동작들:', Array.from(playerTravelledBlocks.keys()));
+
+                        // 해당 동작에 대한 등록 확인
+                        const blockData = playerTravelledBlocks.get(travelType);
+
+                        if (blockData) {
+                            console.log('✅ 플레이어 동작 코드 실행 시작:', travelType);
+                            console.log('------------------------');
+                            blockData.socket.emit('executePlayerTravelledCommands', {
+                                blockId: blockData.blockId,
+                                travelType: travelType,
+                                playerName: playerName
+                            });
+                        } else {
+                            console.log('❌ 일치하는 플레이어 동작 코드가 없습니다');
+                        }
+                        console.log('==========================\n');
+                    }
+
                     // 아이템 사용 이벤트 처리 (우클릭)
                     if (data.header.eventName === 'ItemUsed') {
                         console.log('\n=== 아이템 사용 이벤트 수신 ===');
@@ -3308,6 +3414,19 @@ async function start() {
                 },
                 "body": {
                     "eventName": "MobKilled"
+                }
+            }));
+
+            // PlayerTravelled 이벤트 구독 (플레이어 동작)
+            socket.send(JSON.stringify({
+                "header": {
+                    "version": 1,
+                    "requestId": uuid.v4(),
+                    "messageType": "commandRequest",
+                    "messagePurpose": "subscribe"
+                },
+                "body": {
+                    "eventName": "PlayerTravelled"
                 }
             }));
 

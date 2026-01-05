@@ -853,6 +853,32 @@ Blockly.Blocks['on_item_used'] = {
     }
 };
 
+// 플레이어 동작 감지 Hat 블록
+Blockly.Blocks['on_player_travelled'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("플레이어가")
+            .appendField(new Blockly.FieldDropdown([
+                ["걷고 있으면", "Walk"],
+                ["물에서 수영하고 있으면", "SwimWater"],
+                ["낙하하고 있으면", "Fall"],
+                ["등반하고 있으면", "Climb"],
+                ["용암에서 수영하고 있으면", "SwimLava"],
+                ["날고 있으면", "Fly"],
+                ["타고 있으면", "Riding"],
+                ["웅크리고 있으면", "Sneak"],
+                ["달리고 있으면", "Sprint"],
+                ["튕기고 있으면", "Bounce"]
+            ]), "TRAVEL_TYPE");
+        this.appendStatementInput('NEXT')
+            .setCheck(null);
+        this.setDeletable(true);
+        this.setTooltip("플레이어가 특정 방식으로 이동할 때 실행됩니다");
+        this.setStyle('hat_blocks');
+        this.setColour('#60A5FA');
+    }
+};
+
 
 // 블록 설치 명령 블록 정의
 Blockly.Blocks['set_block'] = {
