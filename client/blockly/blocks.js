@@ -840,14 +840,14 @@ Blockly.Blocks['camera_pos'] = {
 Blockly.Blocks['on_item_used'] = {
     init: function() {
         this.appendDummyInput()
-            .appendField("아이템 사용:");
+            .appendField("아이템 사용(우클릭):");
         this.appendValueInput("ITEM")
             .setCheck(["String", "ItemType"])
             .appendField("아이템");
         this.appendStatementInput('NEXT')
             .setCheck(null);
         this.setDeletable(true);
-        this.setTooltip("플레이어가 특정 아이템을 사용(우클릭)할 때 실행됩니다");
+        this.setTooltip("플레이어가 특정 아이템을 들고 우클릭할 때 실행됩니다");
         this.setStyle('hat_blocks');
         this.setColour('#60A5FA');
     }
@@ -1132,9 +1132,9 @@ Blockly.Blocks['on_item_use'] = {
     init: function() {
         this.appendValueInput('ITEM')
             .setCheck(['String', 'ItemType'])
-            .appendField("아이템");
+            .appendField("아이템 획득:");
         this.appendDummyInput()
-            .appendField("획득시");
+            .appendField("아이템");
         this.appendStatementInput('NEXT');
         this.setColour('#60A5FA');
         this.setTooltip("특정 아이템을 인벤토리에 획득했을 때 코드를 실행합니다");
