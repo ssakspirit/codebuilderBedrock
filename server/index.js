@@ -3055,9 +3055,6 @@ async function start() {
 
                     // 플레이어 동작 감지 이벤트 처리
                     if (data.header.eventName === 'PlayerTravelled') {
-                        console.log('\n=== 플레이어 동작 이벤트 수신 ===');
-                        console.log('전체 이벤트 데이터:', JSON.stringify(data, null, 2));
-
                         // 플레이어 이름 추출
                         let playerName = 'Unknown';
                         if (data.body.player && data.body.player.name) {
@@ -3083,26 +3080,24 @@ async function start() {
 
                         const travelType = travelTypeMap[travelMethod] || 'Walk';
 
-                        console.log('🔍 플레이어:', playerName);
-                        console.log('🔍 동작 타입 (숫자):', travelMethod);
-                        console.log('🔍 동작 타입 (문자):', travelType);
-                        console.log('🔍 등록된 동작들:', Array.from(playerTravelledBlocks.keys()));
-
                         // 해당 동작에 대한 등록 확인
                         const blockData = playerTravelledBlocks.get(travelType);
 
+                        // 등록된 동작만 로그 출력 및 실행
                         if (blockData) {
-                            console.log('✅ 플레이어 동작 코드 실행 시작:', travelType);
+                            console.log('\n=== 플레이어 동작 이벤트 수신 ===');
+                            console.log('🔍 플레이어:', playerName);
+                            console.log('🔍 감지된 동작:', travelType, `(${travelMethod})`);
+                            console.log('🔍 등록된 동작들:', Array.from(playerTravelledBlocks.keys()));
+                            console.log('✅ 매칭 성공! 코드 실행 시작');
                             console.log('------------------------');
                             blockData.socket.emit('executePlayerTravelledCommands', {
                                 blockId: blockData.blockId,
                                 travelType: travelType,
                                 playerName: playerName
                             });
-                        } else {
-                            console.log('❌ 일치하는 플레이어 동작 코드가 없습니다');
+                            console.log('==========================\n');
                         }
-                        console.log('==========================\n');
                     }
 
                     // 아이템 사용 이벤트 처리 (우클릭)
