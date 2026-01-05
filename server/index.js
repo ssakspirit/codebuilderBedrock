@@ -2801,7 +2801,15 @@ async function start() {
             socket.on('message', (message) => {
                 try {
                     const data = JSON.parse(message);
-                    
+
+                    // 모든 이벤트 로깅 (디버깅용)
+                    if (data.header && data.header.eventName) {
+                        console.log('\n🔔 [이벤트 수신]', data.header.eventName);
+                        if (data.header.eventName.includes('Item') || data.header.eventName.includes('Player')) {
+                            console.log('   데이터:', JSON.stringify(data, null, 2));
+                        }
+                    }
+
                     if (data.header.eventName === 'PlayerMessage') {
                         const chatMessage = data.body.message.trim();
                         const playerName = data.body.sender || data.body.sourceName || data.body.playerName || 'Unknown';
